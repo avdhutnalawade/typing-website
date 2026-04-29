@@ -53,7 +53,7 @@ body {
     border-radius:15px;
 }
 
-/* 🔥 बाकी तुझा ORIGINAL CSS SAME */
+/* बाकी ORIGINAL CSS SAME */
 #welcomeScreen{
     position:fixed;
     top:0;
@@ -160,6 +160,21 @@ body {
 <button onclick="login()">Login</button>
 </div>
 
+<!-- 🔥 CREATE ACCOUNT (ADDED) -->
+<div class="login-box" id="createBox" style="top:220px;" onclick="event.stopPropagation()">
+<h3>Create Account</h3>
+<input type="text" id="newUsername" placeholder="Username">
+<input type="password" id="newPassword" placeholder="Password">
+<button onclick="createAccount()">Create</button>
+</div>
+
+<!-- 🔊 SOUND CONTROL (ADDED) -->
+<div class="login-box" id="soundBox" style="top:380px; display:block;" onclick="event.stopPropagation()">
+<h3>Sound</h3>
+<button onclick="volumeUp()">Volume +</button>
+<button onclick="volumeDown()">Volume -</button>
+</div>
+
 <!-- 🔥 WELCOME SCREEN -->
 <div id="welcomeScreen">
     <div id="welcomeText">Welcome 🚀</div>
@@ -171,6 +186,7 @@ body {
 <div class="nav-buttons">
 <a onclick="showTest()">Test</a>
 <a onclick="openLogin()">Login</a>
+<a onclick="openCreate()">Create</a>
 <span id="userDisplay"></span>
 </div>
 </div>
@@ -197,9 +213,10 @@ body {
 
 <script>
 
-/* LOGIN */
+/* USERS */
 let users = {"admin":"1234"};
 
+/* LOGIN */
 function openLogin(){
     loginBox.style.display="block";
 }
@@ -217,8 +234,28 @@ function login(){
     }
 }
 
-/* बाकी तुझा ORIGINAL JS SAME */
+/* CREATE ACCOUNT (ADDED) */
+function openCreate(){
+    createBox.style.display="block";
+}
+
+function createAccount(){
+    let u=newUsername.value;
+    let p=newPassword.value;
+
+    if(u && p){
+        users[u]=p;
+        alert("Account Created");
+        createBox.style.display="none";
+    } else{
+        alert("Enter Username & Password");
+    }
+}
+
+/* AUDIO */
 let audioCtx;
+let volume = 0.1;
+
 function unlockAudio(){
     if(!audioCtx){
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -233,7 +270,7 @@ function playKeySound(){
 
     osc.type = "square";
     osc.frequency.value = 200 + Math.random()*100;
-    gain.gain.value = 0.1;
+    gain.gain.value = volume;
 
     osc.connect(gain);
     gain.connect(audioCtx.destination);
@@ -242,6 +279,15 @@ function playKeySound(){
     osc.stop(audioCtx.currentTime + 0.05);
 }
 
+function volumeUp(){
+    volume = Math.min(1, volume + 0.1);
+}
+
+function volumeDown(){
+    volume = Math.max(0, volume - 0.1);
+}
+
+/* ORIGINAL JS SAME */
 let paragraphs=[
 "Technology is evolving rapidly in today's world and typing is an essential skill for everyone."
 ];
