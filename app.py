@@ -13,7 +13,6 @@ def home():
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&family=Pacifico&display=swap" rel="stylesheet">
 
 <style>
-/* ❌ FULL STYLE SAME — NO CHANGE */
 body {
     margin:0;
     font-family:'Roboto Mono', monospace;
@@ -22,6 +21,7 @@ body {
     overflow:hidden;
 }
 
+/* 🔥 WELCOME SCREEN */
 #welcomeScreen{
     position:fixed;
     top:0;
@@ -54,6 +54,7 @@ body {
     font-size:16px;
 }
 
+/* original code */
 .header {
     width:100%;
     display:flex;
@@ -83,11 +84,19 @@ body {
     text-align:center;
 }
 
-#task { font-size:32px; line-height:2; color:#aaa; }
+#task {
+    font-size:32px;
+    line-height:2;
+    color:#aaa;
+}
+
 .correct {color:#00ff88;}
 .wrong {color:#ff4d4d;}
 
-#hiddenInput { opacity:0; position:absolute; }
+#hiddenInput {
+    opacity:0;
+    position:absolute;
+}
 
 #timer {
     font-size:28px;
@@ -105,7 +114,10 @@ body {
     color:white;
     font-size:16px;
     cursor:pointer;
+    box-shadow:0 0 15px rgba(0,198,255,0.7);
+    transition:0.3s;
 }
+.btn:hover {transform:scale(1.1);}
 
 .test-box {
     position:absolute;
@@ -128,6 +140,7 @@ body {
     color:white;
     cursor:pointer;
 }
+.time-btn:hover {transform:scale(1.1);}
 
 .volume-box{
     position:fixed;
@@ -139,6 +152,7 @@ body {
 
 <body onclick="focusInput(); unlockAudio();">
 
+<!-- 🔥 WELCOME SCREEN -->
 <div id="welcomeScreen">
     <div id="welcomeText">Welcome 🚀</div>
     <button class="start-btn" onclick="startSite()">Start</button>
@@ -179,60 +193,57 @@ body {
 
 <script>
 
-/* SAME START */
+/* 🔥 START BUTTON CONTROL */
 function startSite(){
     let screen = document.getElementById("welcomeScreen");
+
+    screen.style.transition="1s";
     screen.style.opacity="0";
+
     setTimeout(()=>{
         screen.style.display="none";
         loadText();
     },1000);
 }
 
-/* 🔊 PROFESSIONAL KEYBOARD SOUND */
+/* 🔊 PERFECT SOUND SYSTEM */
 let volume = 0.5;
 let unlocked = false;
-let sounds = [];
+let audioCtx;
 
-// real mechanical typing sound (multi-layer)
-for(let i=0;i<12;i++){
-    let a = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-mechanical-keyboard-single-key-press-1502.mp3");
-    a.preload = "auto";
-    sounds.push(a);
-}
-
+// volume control
 document.getElementById("volumeSlider").oninput=function(){
     volume=this.value;
 };
 
+// unlock audio
 function unlockAudio(){
     if(!unlocked){
-        sounds.forEach(s=>{
-            s.volume=0;
-            s.play().then(()=>{
-                s.pause();
-                s.currentTime=0;
-            }).catch(()=>{});
-        });
-        unlocked=true;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        unlocked = true;
     }
 }
 
-let idx=0;
+// 🔥 KEYBOARD CLICK SOUND (fast + real feel)
+function playKeySound(){
+    if(!unlocked) return;
 
-// 🔥 REAL KEY FEEL
-document.addEventListener("keydown", function(){
-    if(!unlocked) unlockAudio();
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
 
-    let s = sounds[idx];
-    s.currentTime = 0;
-    s.volume = volume;
-    s.play().catch(()=>{});
+    osc.type = "square";
+    osc.frequency.value = 200 + Math.random()*100;
 
-    idx = (idx+1)%sounds.length;
-});
+    gain.gain.value = volume * 0.2;
 
-/* REST SAME (typing logic untouched) */
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.05);
+}
+
+/* typing logic same */
 let paragraphs=[
 "Technology is evolving rapidly in today's world and typing is an essential skill for everyone.",
 "Practice daily to improve your typing speed and accuracy over time and build strong muscle memory.",
@@ -275,6 +286,8 @@ function focusInput(){
 
 document.getElementById("hiddenInput").addEventListener("input",function(){
 
+    playKeySound();
+
     let input=this.value;
     let spans=document.querySelectorAll("#task span");
 
@@ -298,15 +311,28 @@ document.getElementById("hiddenInput").addEventListener("input",function(){
 
 function finishTest(){
     clearInterval(timer);
+
     let time=(new Date().getTime()-startTime)/60000;
     let wpm=Math.round((totalTyped/5)/time);
+
     document.getElementById("result").innerHTML="🎉 WPM: "+wpm;
+
+    document.getElementById("nextBtn").style.display="inline-block";
+    document.getElementById("restartBtn").style.display="inline-block";
 }
 
 function nextTest(){ timeLeft=60; loadText(); }
 function restartTest(){ timeLeft=60; loadText(); }
-function showTest(){ document.getElementById("testBox").style.display="block"; }
-function startTest(t){ timeLeft=t; document.getElementById("testBox").style.display="none"; loadText(); }
+
+function showTest(){
+    document.getElementById("testBox").style.display="block";
+}
+
+function startTest(t){
+    timeLeft=t;
+    document.getElementById("testBox").style.display="none";
+    loadText();
+}
 
 </script>
 </body>
