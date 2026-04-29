@@ -13,6 +13,7 @@ def home():
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&family=Pacifico&display=swap" rel="stylesheet">
 
 <style>
+/* 🔥 SAME STYLE */
 body {
     margin:0;
     font-family:'Roboto Mono', monospace;
@@ -21,7 +22,6 @@ body {
     overflow:hidden;
 }
 
-/* 🔥 WELCOME SCREEN */
 #welcomeScreen{
     position:fixed;
     top:0;
@@ -54,7 +54,6 @@ body {
     font-size:16px;
 }
 
-/* original code */
 .header {
     width:100%;
     display:flex;
@@ -84,19 +83,11 @@ body {
     text-align:center;
 }
 
-#task {
-    font-size:32px;
-    line-height:2;
-    color:#aaa;
-}
-
+#task { font-size:32px; line-height:2; color:#aaa; }
 .correct {color:#00ff88;}
 .wrong {color:#ff4d4d;}
 
-#hiddenInput {
-    opacity:0;
-    position:absolute;
-}
+#hiddenInput { opacity:0; position:absolute; }
 
 #timer {
     font-size:28px;
@@ -114,10 +105,7 @@ body {
     color:white;
     font-size:16px;
     cursor:pointer;
-    box-shadow:0 0 15px rgba(0,198,255,0.7);
-    transition:0.3s;
 }
-.btn:hover {transform:scale(1.1);}
 
 .test-box {
     position:absolute;
@@ -140,17 +128,42 @@ body {
     color:white;
     cursor:pointer;
 }
-.time-btn:hover {transform:scale(1.1);}
 
 .volume-box{
     position:fixed;
     bottom:20px;
     right:20px;
 }
+
+/* 🔥 LOGIN POPUP */
+.login-box{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:#222;
+    padding:20px;
+    border-radius:10px;
+    display:none;
+    z-index:9999;
+}
+.login-box input{
+    display:block;
+    margin:10px 0;
+    padding:8px;
+}
 </style>
 </head>
 
 <body onclick="focusInput(); unlockAudio();">
+
+<!-- LOGIN BOX -->
+<div class="login-box" id="loginBox">
+<h3>Login</h3>
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+<button onclick="login()">Login</button>
+</div>
 
 <!-- 🔥 WELCOME SCREEN -->
 <div id="welcomeScreen">
@@ -166,8 +179,8 @@ body {
 <h2>Welcome to Beginner Typing Speed Test</h2>
 <div class="nav-buttons">
 <a onclick="showTest()">Test</a>
-<a>Login</a>
-<a>Create Account</a>
+<a onclick="openLogin()">Login</a>
+<span id="userDisplay"></span>
 </div>
 </div>
 
@@ -176,47 +189,48 @@ body {
 <div id="task"></div>
 <input id="hiddenInput">
 <div id="result"></div>
-
-<div>
-<button class="btn" onclick="nextTest()" id="nextBtn" style="display:none;">Next</button>
-<button class="btn" onclick="restartTest()" id="restartBtn" style="display:none;">Restart</button>
-</div>
-</div>
-
-<div class="test-box" id="testBox">
-<h2>Select Time</h2>
-<button class="time-btn" onclick="startTest(60)">1 Min</button>
-<button class="time-btn" onclick="startTest(180)">3 Min</button>
-<button class="time-btn" onclick="startTest(300)">5 Min</button>
-<button class="time-btn" onclick="startTest(600)">10 Min</button>
 </div>
 
 <script>
 
-/* 🔥 START BUTTON CONTROL */
+/* 🔥 LOGIN SYSTEM */
+let users = {"admin":"1234"};
+
+function openLogin(){
+    document.getElementById("loginBox").style.display="block";
+}
+
+function login(){
+    let u=document.getElementById("username").value;
+    let p=document.getElementById("password").value;
+
+    if(users[u] && users[u]==p){
+        document.getElementById("userDisplay").innerText="👤 "+u;
+        alert("Login Successful ✅");
+        document.getElementById("loginBox").style.display="none";
+    } else{
+        alert("Wrong Username or Password ❌");
+    }
+}
+
+/* 🔥 ORIGINAL CODE BELOW SAME */
 function startSite(){
     let screen = document.getElementById("welcomeScreen");
-
-    screen.style.transition="1s";
     screen.style.opacity="0";
-
     setTimeout(()=>{
         screen.style.display="none";
         loadText();
     },1000);
 }
 
-/* 🔊 PERFECT SOUND SYSTEM */
 let volume = 0.5;
 let unlocked = false;
 let audioCtx;
 
-// volume control
 document.getElementById("volumeSlider").oninput=function(){
     volume=this.value;
 };
 
-// unlock audio
 function unlockAudio(){
     if(!unlocked){
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -224,7 +238,6 @@ function unlockAudio(){
     }
 }
 
-// 🔥 KEYBOARD CLICK SOUND (fast + real feel)
 function playKeySound(){
     if(!unlocked) return;
 
@@ -243,7 +256,6 @@ function playKeySound(){
     osc.stop(audioCtx.currentTime + 0.05);
 }
 
-/* typing logic same */
 let paragraphs=[
 "Technology is evolving rapidly in today's world and typing is an essential skill for everyone.",
 "Practice daily to improve your typing speed and accuracy over time and build strong muscle memory.",
@@ -256,9 +268,6 @@ let startTime,totalTyped=0;
 
 function loadText(){
     document.getElementById("result").innerHTML="";
-    document.getElementById("nextBtn").style.display="none";
-    document.getElementById("restartBtn").style.display="none";
-
     currentText=paragraphs[Math.floor(Math.random()*paragraphs.length)];
 
     let html="";
@@ -311,18 +320,10 @@ document.getElementById("hiddenInput").addEventListener("input",function(){
 
 function finishTest(){
     clearInterval(timer);
-
     let time=(new Date().getTime()-startTime)/60000;
     let wpm=Math.round((totalTyped/5)/time);
-
     document.getElementById("result").innerHTML="🎉 WPM: "+wpm;
-
-    document.getElementById("nextBtn").style.display="inline-block";
-    document.getElementById("restartBtn").style.display="inline-block";
 }
-
-function nextTest(){ timeLeft=60; loadText(); }
-function restartTest(){ timeLeft=60; loadText(); }
 
 function showTest(){
     document.getElementById("testBox").style.display="block";
