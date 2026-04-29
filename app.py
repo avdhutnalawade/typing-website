@@ -54,7 +54,6 @@ body {
     font-size:16px;
 }
 
-/* original code */
 .header {
     width:100%;
     display:flex;
@@ -114,8 +113,6 @@ body {
     color:white;
     font-size:16px;
     cursor:pointer;
-    box-shadow:0 0 15px rgba(0,198,255,0.7);
-    transition:0.3s;
 }
 .btn:hover {transform:scale(1.1);}
 
@@ -140,7 +137,6 @@ body {
     color:white;
     cursor:pointer;
 }
-.time-btn:hover {transform:scale(1.1);}
 
 .volume-box{
     position:fixed;
@@ -192,10 +188,9 @@ body {
 
 <script>
 
-/* 🔥 START */
+/* START */
 function startSite(){
     let screen = document.getElementById("welcomeScreen");
-    screen.style.transition="1s";
     screen.style.opacity="0";
     setTimeout(()=>{
         screen.style.display="none";
@@ -203,13 +198,12 @@ function startSite(){
     },1000);
 }
 
-/* 🔊 ADVANCED REAL KEYBOARD SOUND */
+/* 🔊 SOUND SYSTEM (FIXED) */
 let volume = 0.5;
 let unlocked = false;
 let sounds = [];
 
-// multiple audio layers (no lag)
-for(let i=0;i<10;i++){
+for(let i=0;i<8;i++){
     let audio = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-fast-typing-on-keyboard-2544.mp3");
     audio.preload = "auto";
     sounds.push(audio);
@@ -222,28 +216,34 @@ document.getElementById("volumeSlider").oninput=function(){
 function unlockAudio(){
     if(!unlocked){
         sounds.forEach(s=>{
-            s.volume = 0;
+            s.volume=0;
             s.play().then(()=>{
                 s.pause();
-                s.currentTime = 0;
+                s.currentTime=0;
             }).catch(()=>{});
         });
-        unlocked = true;
+        unlocked=true;
     }
 }
 
-let soundIndex = 0;
+let index=0;
 
 function playKeySound(){
     if(!unlocked) return;
 
-    let s = sounds[soundIndex];
+    let s = sounds[index];
     s.currentTime = 0;
     s.volume = volume;
     s.play().catch(()=>{});
 
-    soundIndex = (soundIndex + 1) % sounds.length;
+    index = (index+1)%sounds.length;
 }
+
+/* 🔥 KEYBOARD DETECT */
+document.addEventListener("keydown", function(){
+    unlockAudio();
+    playKeySound();
+});
 
 /* typing logic */
 let paragraphs=[
@@ -258,9 +258,6 @@ let startTime,totalTyped=0;
 
 function loadText(){
     document.getElementById("result").innerHTML="";
-    document.getElementById("nextBtn").style.display="none";
-    document.getElementById("restartBtn").style.display="none";
-
     currentText=paragraphs[Math.floor(Math.random()*paragraphs.length)];
 
     let html="";
@@ -286,45 +283,12 @@ function focusInput(){
     document.getElementById("hiddenInput").focus();
 }
 
-document.getElementById("hiddenInput").addEventListener("input",function(){
-
-    playKeySound();
-
-    let input=this.value;
-    let spans=document.querySelectorAll("#task span");
-
-    totalTyped=input.length;
-
-    for(let i=0;i<spans.length;i++){
-        if(input[i]==null){
-            spans[i].classList.remove("correct","wrong");
-        }
-        else if(input[i]===currentText[i]){
-            spans[i].classList.add("correct");
-            spans[i].classList.remove("wrong");
-        } else {
-            spans[i].classList.add("wrong");
-            spans[i].classList.remove("correct");
-        }
-    }
-
-    if(input===currentText) finishTest();
-});
-
 function finishTest(){
     clearInterval(timer);
-
     let time=(new Date().getTime()-startTime)/60000;
     let wpm=Math.round((totalTyped/5)/time);
-
     document.getElementById("result").innerHTML="🎉 WPM: "+wpm;
-
-    document.getElementById("nextBtn").style.display="inline-block";
-    document.getElementById("restartBtn").style.display="inline-block";
 }
-
-function nextTest(){ timeLeft=60; loadText(); }
-function restartTest(){ timeLeft=60; loadText(); }
 
 function showTest(){
     document.getElementById("testBox").style.display="block";
