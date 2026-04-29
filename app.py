@@ -21,19 +21,37 @@ body {
     overflow:hidden;
 }
 
-/* 🔥 LOGIN LEFT SIDE */
-.login-box{
+/* 🔵 LEFT BUTTONS (ADDED) */
+.left-menu{
     position:fixed;
-    top:120px;
+    top:150px;
     left:20px;
-    width:220px;
-    background:rgba(0,0,0,0.8);
-    padding:15px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    z-index:9999;
+}
+.left-menu button{
+    padding:10px;
+    border:none;
+    border-radius:6px;
+    background:#00c6ff;
+    cursor:pointer;
+}
+
+/* 🟨 CENTER MODAL (ADDED) */
+.modal{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:rgba(0,0,0,0.9);
+    padding:20px;
     border-radius:10px;
     display:none;
     z-index:9999;
 }
-.login-box input{
+.modal input{
     width:100%;
     margin:8px 0;
     padding:8px;
@@ -41,19 +59,15 @@ body {
     border-radius:5px;
 }
 
-/* 🔥 TEST BOX LEFT SIDE */
-.test-box {
+/* 🔊 SOUND CORNER (ADDED) */
+.sound-box{
     position:fixed;
-    top:260px;
-    left:20px;
-    display:none;
-    text-align:center;
-    background:rgba(255,255,255,0.1);
-    padding:25px;
-    border-radius:15px;
+    top:20px;
+    right:20px;
+    z-index:9999;
 }
 
-/* बाकी ORIGINAL CSS SAME */
+/* 🔥 ORIGINAL CSS SAME */
 #welcomeScreen{
     position:fixed;
     top:0;
@@ -98,14 +112,6 @@ body {
 }
 .header h2{color:#00ffff;}
 
-.nav-buttons a {
-    background:#00c6ff;
-    padding:10px 20px;
-    margin-left:10px;
-    border-radius:6px;
-    cursor:pointer;
-}
-
 .center {
     position:absolute;
     top:55%;
@@ -147,35 +153,55 @@ body {
     cursor:pointer;
 }
 
+/* 🔥 TEST BOX CENTER (MODIFIED ONLY POSITION) */
+.test-box {
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    display:none;
+    text-align:center;
+    background:rgba(255,255,255,0.1);
+    padding:25px;
+    border-radius:15px;
+    z-index:9999;
+}
+
 </style>
 </head>
 
 <body onclick="focusInput(); unlockAudio();">
 
-<!-- 🔥 LOGIN -->
-<div class="login-box" id="loginBox" onclick="event.stopPropagation()">
+<!-- 🔵 LEFT BUTTONS (ADDED) -->
+<div class="left-menu">
+<button onclick="showTest()">Test</button>
+<button onclick="openLogin()">Login</button>
+<button onclick="openCreate()">Create Account</button>
+</div>
+
+<!-- 🟨 LOGIN MODAL -->
+<div class="modal" id="loginBox">
 <h3>Login</h3>
 <input type="text" id="username" placeholder="Username">
 <input type="password" id="password" placeholder="Password">
 <button onclick="login()">Login</button>
 </div>
 
-<!-- 🔥 CREATE ACCOUNT (ADDED) -->
-<div class="login-box" id="createBox" style="top:220px;" onclick="event.stopPropagation()">
+<!-- 🟨 CREATE MODAL (ADDED) -->
+<div class="modal" id="createBox">
 <h3>Create Account</h3>
 <input type="text" id="newUsername" placeholder="Username">
 <input type="password" id="newPassword" placeholder="Password">
 <button onclick="createAccount()">Create</button>
 </div>
 
-<!-- 🔊 SOUND CONTROL (ADDED) -->
-<div class="login-box" id="soundBox" style="top:380px; display:block;" onclick="event.stopPropagation()">
-<h3>Sound</h3>
-<button onclick="volumeUp()">Volume +</button>
-<button onclick="volumeDown()">Volume -</button>
+<!-- 🔊 SOUND -->
+<div class="sound-box">
+<button onclick="volumeUp()">+</button>
+<button onclick="volumeDown()">-</button>
 </div>
 
-<!-- 🔥 WELCOME SCREEN -->
+<!-- 🔥 ORIGINAL WELCOME -->
 <div id="welcomeScreen">
     <div id="welcomeText">Welcome 🚀</div>
     <button class="start-btn" onclick="startSite()">Start</button>
@@ -183,12 +209,7 @@ body {
 
 <div class="header">
 <h2>Welcome to Beginner Typing Speed Test</h2>
-<div class="nav-buttons">
-<a onclick="showTest()">Test</a>
-<a onclick="openLogin()">Login</a>
-<a onclick="openCreate()">Create</a>
 <span id="userDisplay"></span>
-</div>
 </div>
 
 <div class="center">
@@ -217,17 +238,12 @@ body {
 let users = {"admin":"1234"};
 
 /* LOGIN */
-function openLogin(){
-    loginBox.style.display="block";
-}
-
+function openLogin(){ loginBox.style.display="block"; }
 function login(){
     let u=username.value;
     let p=password.value;
-
     if(users[u] && users[u]==p){
         userDisplay.innerText="👤 "+u;
-        alert("Login Successful");
         loginBox.style.display="none";
     } else{
         alert("Wrong Username or Password");
@@ -235,26 +251,20 @@ function login(){
 }
 
 /* CREATE ACCOUNT (ADDED) */
-function openCreate(){
-    createBox.style.display="block";
-}
-
+function openCreate(){ createBox.style.display="block"; }
 function createAccount(){
     let u=newUsername.value;
     let p=newPassword.value;
-
     if(u && p){
         users[u]=p;
         alert("Account Created");
         createBox.style.display="none";
-    } else{
-        alert("Enter Username & Password");
     }
 }
 
 /* AUDIO */
 let audioCtx;
-let volume = 0.1;
+let volume=0.1;
 
 function unlockAudio(){
     if(!audioCtx){
@@ -279,15 +289,10 @@ function playKeySound(){
     osc.stop(audioCtx.currentTime + 0.05);
 }
 
-function volumeUp(){
-    volume = Math.min(1, volume + 0.1);
-}
+function volumeUp(){ volume=Math.min(1,volume+0.1); }
+function volumeDown(){ volume=Math.max(0,volume-0.1); }
 
-function volumeDown(){
-    volume = Math.max(0, volume - 0.1);
-}
-
-/* ORIGINAL JS SAME */
+/* ORIGINAL TEST LOGIC SAME */
 let paragraphs=[
 "Technology is evolving rapidly in today's world and typing is an essential skill for everyone."
 ];
@@ -321,12 +326,9 @@ function updateTimer(){
     if(timeLeft<=0) finishTest();
 }
 
-function focusInput(){
-    hiddenInput.focus();
-}
+function focusInput(){ hiddenInput.focus(); }
 
 hiddenInput.addEventListener("input",function(){
-
     playKeySound();
 
     let input=this.value;
@@ -365,9 +367,7 @@ function finishTest(){
 function nextTest(){ timeLeft=60; loadText(); }
 function restartTest(){ timeLeft=60; loadText(); }
 
-function showTest(){
-    testBox.style.display="block";
-}
+function showTest(){ testBox.style.display="block"; }
 
 function startTest(t){
     timeLeft=t;
