@@ -152,7 +152,6 @@ body {
 
 <body onclick="focusInput(); unlockAudio();">
 
-<!-- 🔥 WELCOME SCREEN -->
 <div id="welcomeScreen">
     <div id="welcomeText">Welcome 🚀</div>
     <button class="start-btn" onclick="startSite()">Start</button>
@@ -193,57 +192,60 @@ body {
 
 <script>
 
-/* 🔥 START BUTTON CONTROL */
+/* 🔥 START */
 function startSite(){
     let screen = document.getElementById("welcomeScreen");
-
     screen.style.transition="1s";
     screen.style.opacity="0";
-
     setTimeout(()=>{
         screen.style.display="none";
         loadText();
     },1000);
 }
 
-/* 🔊 PERFECT SOUND SYSTEM */
+/* 🔊 ADVANCED REAL KEYBOARD SOUND */
 let volume = 0.5;
 let unlocked = false;
-let audioCtx;
+let sounds = [];
 
-// volume control
+// multiple audio layers (no lag)
+for(let i=0;i<10;i++){
+    let audio = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-fast-typing-on-keyboard-2544.mp3");
+    audio.preload = "auto";
+    sounds.push(audio);
+}
+
 document.getElementById("volumeSlider").oninput=function(){
     volume=this.value;
 };
 
-// unlock audio
 function unlockAudio(){
     if(!unlocked){
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        sounds.forEach(s=>{
+            s.volume = 0;
+            s.play().then(()=>{
+                s.pause();
+                s.currentTime = 0;
+            }).catch(()=>{});
+        });
         unlocked = true;
     }
 }
 
-// 🔥 KEYBOARD CLICK SOUND (fast + real feel)
+let soundIndex = 0;
+
 function playKeySound(){
     if(!unlocked) return;
 
-    let osc = audioCtx.createOscillator();
-    let gain = audioCtx.createGain();
+    let s = sounds[soundIndex];
+    s.currentTime = 0;
+    s.volume = volume;
+    s.play().catch(()=>{});
 
-    osc.type = "square";
-    osc.frequency.value = 200 + Math.random()*100;
-
-    gain.gain.value = volume * 0.2;
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.05);
+    soundIndex = (soundIndex + 1) % sounds.length;
 }
 
-/* typing logic same */
+/* typing logic */
 let paragraphs=[
 "Technology is evolving rapidly in today's world and typing is an essential skill for everyone.",
 "Practice daily to improve your typing speed and accuracy over time and build strong muscle memory.",
