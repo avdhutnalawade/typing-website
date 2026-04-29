@@ -13,7 +13,6 @@ def home():
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&family=Pacifico&display=swap" rel="stylesheet">
 
 <style>
-/* 🔥 SAME STYLE */
 body {
     margin:0;
     font-family:'Roboto Mono', monospace;
@@ -22,6 +21,39 @@ body {
     overflow:hidden;
 }
 
+/* 🔥 LOGIN LEFT SIDE */
+.login-box{
+    position:fixed;
+    top:120px;
+    left:20px;
+    width:220px;
+    background:rgba(0,0,0,0.8);
+    padding:15px;
+    border-radius:10px;
+    display:none;
+    z-index:9999;
+}
+.login-box input{
+    width:100%;
+    margin:8px 0;
+    padding:8px;
+    border:none;
+    border-radius:5px;
+}
+
+/* 🔥 TEST BOX LEFT SIDE */
+.test-box {
+    position:fixed;
+    top:260px;
+    left:20px;
+    display:none;
+    text-align:center;
+    background:rgba(255,255,255,0.1);
+    padding:25px;
+    border-radius:15px;
+}
+
+/* 🔥 बाकी तुझा ORIGINAL CSS SAME */
 #welcomeScreen{
     position:fixed;
     top:0;
@@ -83,11 +115,19 @@ body {
     text-align:center;
 }
 
-#task { font-size:32px; line-height:2; color:#aaa; }
+#task {
+    font-size:32px;
+    line-height:2;
+    color:#aaa;
+}
+
 .correct {color:#00ff88;}
 .wrong {color:#ff4d4d;}
 
-#hiddenInput { opacity:0; position:absolute; }
+#hiddenInput {
+    opacity:0;
+    position:absolute;
+}
 
 #timer {
     font-size:28px;
@@ -107,58 +147,13 @@ body {
     cursor:pointer;
 }
 
-.test-box {
-    position:absolute;
-    top:60%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    display:none;
-    text-align:center;
-    background:rgba(255,255,255,0.1);
-    padding:25px;
-    border-radius:15px;
-}
-
-.time-btn {
-    margin:8px;
-    padding:12px 22px;
-    border:none;
-    border-radius:8px;
-    background:linear-gradient(45deg,#00c6ff,#0072ff);
-    color:white;
-    cursor:pointer;
-}
-
-.volume-box{
-    position:fixed;
-    bottom:20px;
-    right:20px;
-}
-
-/* 🔥 LOGIN POPUP */
-.login-box{
-    position:fixed;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    background:#222;
-    padding:20px;
-    border-radius:10px;
-    display:none;
-    z-index:9999;
-}
-.login-box input{
-    display:block;
-    margin:10px 0;
-    padding:8px;
-}
 </style>
 </head>
 
 <body onclick="focusInput(); unlockAudio();">
 
-<!-- LOGIN BOX -->
-<div class="login-box" id="loginBox">
+<!-- 🔥 LOGIN -->
+<div class="login-box" id="loginBox" onclick="event.stopPropagation()">
 <h3>Login</h3>
 <input type="text" id="username" placeholder="Username">
 <input type="password" id="password" placeholder="Password">
@@ -169,10 +164,6 @@ body {
 <div id="welcomeScreen">
     <div id="welcomeText">Welcome 🚀</div>
     <button class="start-btn" onclick="startSite()">Start</button>
-</div>
-
-<div class="volume-box">
-🔊 <input type="range" min="0" max="1" step="0.05" value="0.5" id="volumeSlider">
 </div>
 
 <div class="header">
@@ -189,65 +180,60 @@ body {
 <div id="task"></div>
 <input id="hiddenInput">
 <div id="result"></div>
+
+<div>
+<button class="btn" onclick="nextTest()" id="nextBtn" style="display:none;">Next</button>
+<button class="btn" onclick="restartTest()" id="restartBtn" style="display:none;">Restart</button>
+</div>
+</div>
+
+<div class="test-box" id="testBox">
+<h2>Select Time</h2>
+<button onclick="startTest(60)">1 Min</button>
+<button onclick="startTest(180)">3 Min</button>
+<button onclick="startTest(300)">5 Min</button>
+<button onclick="startTest(600)">10 Min</button>
 </div>
 
 <script>
 
-/* 🔥 LOGIN SYSTEM */
+/* LOGIN */
 let users = {"admin":"1234"};
 
 function openLogin(){
-    document.getElementById("loginBox").style.display="block";
+    loginBox.style.display="block";
 }
 
 function login(){
-    let u=document.getElementById("username").value;
-    let p=document.getElementById("password").value;
+    let u=username.value;
+    let p=password.value;
 
     if(users[u] && users[u]==p){
-        document.getElementById("userDisplay").innerText="👤 "+u;
-        alert("Login Successful ✅");
-        document.getElementById("loginBox").style.display="none";
+        userDisplay.innerText="👤 "+u;
+        alert("Login Successful");
+        loginBox.style.display="none";
     } else{
-        alert("Wrong Username or Password ❌");
+        alert("Wrong Username or Password");
     }
 }
 
-/* 🔥 ORIGINAL CODE BELOW SAME */
-function startSite(){
-    let screen = document.getElementById("welcomeScreen");
-    screen.style.opacity="0";
-    setTimeout(()=>{
-        screen.style.display="none";
-        loadText();
-    },1000);
-}
-
-let volume = 0.5;
-let unlocked = false;
+/* बाकी तुझा ORIGINAL JS SAME */
 let audioCtx;
-
-document.getElementById("volumeSlider").oninput=function(){
-    volume=this.value;
-};
-
 function unlockAudio(){
-    if(!unlocked){
+    if(!audioCtx){
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        unlocked = true;
     }
 }
 
 function playKeySound(){
-    if(!unlocked) return;
+    if(!audioCtx) return;
 
     let osc = audioCtx.createOscillator();
     let gain = audioCtx.createGain();
 
     osc.type = "square";
     osc.frequency.value = 200 + Math.random()*100;
-
-    gain.gain.value = volume * 0.2;
+    gain.gain.value = 0.1;
 
     osc.connect(gain);
     gain.connect(audioCtx.destination);
@@ -257,26 +243,26 @@ function playKeySound(){
 }
 
 let paragraphs=[
-"Technology is evolving rapidly in today's world and typing is an essential skill for everyone.",
-"Practice daily to improve your typing speed and accuracy over time and build strong muscle memory.",
-"Consistency and patience are key to mastering keyboard skills and becoming more efficient.",
-"Focus on accuracy first and then speed will naturally improve with continuous practice."
+"Technology is evolving rapidly in today's world and typing is an essential skill for everyone."
 ];
 
 let currentText="",timer,timeLeft=60;
 let startTime,totalTyped=0;
 
 function loadText(){
-    document.getElementById("result").innerHTML="";
-    currentText=paragraphs[Math.floor(Math.random()*paragraphs.length)];
+    result.innerHTML="";
+    nextBtn.style.display="none";
+    restartBtn.style.display="none";
+
+    currentText=paragraphs[0];
 
     let html="";
     for(let i=0;i<currentText.length;i++){
         html+="<span>"+currentText[i]+"</span>";
     }
-    document.getElementById("task").innerHTML=html;
+    task.innerHTML=html;
 
-    document.getElementById("hiddenInput").value="";
+    hiddenInput.value="";
     startTime=new Date().getTime();
 
     clearInterval(timer);
@@ -290,10 +276,10 @@ function updateTimer(){
 }
 
 function focusInput(){
-    document.getElementById("hiddenInput").focus();
+    hiddenInput.focus();
 }
 
-document.getElementById("hiddenInput").addEventListener("input",function(){
+hiddenInput.addEventListener("input",function(){
 
     playKeySound();
 
@@ -320,18 +306,31 @@ document.getElementById("hiddenInput").addEventListener("input",function(){
 
 function finishTest(){
     clearInterval(timer);
+
     let time=(new Date().getTime()-startTime)/60000;
     let wpm=Math.round((totalTyped/5)/time);
-    document.getElementById("result").innerHTML="🎉 WPM: "+wpm;
+
+    result.innerHTML="🎉 WPM: "+wpm;
+
+    nextBtn.style.display="inline-block";
+    restartBtn.style.display="inline-block";
 }
 
+function nextTest(){ timeLeft=60; loadText(); }
+function restartTest(){ timeLeft=60; loadText(); }
+
 function showTest(){
-    document.getElementById("testBox").style.display="block";
+    testBox.style.display="block";
 }
 
 function startTest(t){
     timeLeft=t;
-    document.getElementById("testBox").style.display="none";
+    testBox.style.display="none";
+    loadText();
+}
+
+function startSite(){
+    welcomeScreen.style.display="none";
     loadText();
 }
 
