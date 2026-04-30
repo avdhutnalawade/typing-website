@@ -1,6 +1,3 @@
-To swap the synthesized sound for a real typewriter sound, stop the timer upon completion, and add a tutorial section, I have updated the code below.
-For the sound, I have replaced the Oscillator logic with an **Audio URL**. For the tutorial, I added a modal that embeds a popular typing tips video.
-```python
 from flask import Flask
 
 app = Flask(__name__)
@@ -10,84 +7,21 @@ def home():
     return """
 <!DOCTYPE html>  <html>  
 <head>  
-<title>Beginner Typing Speed Test</title>  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&family=Pacifico&display=swap" rel="stylesheet">  <style>  
-body {  
-    margin:0;  
-    font-family:'Roboto Mono', monospace;  
-    background:#1a1a2e;  
-    color:white;  
-    overflow:hidden;  
-}  
-  
-/* 🔥 LEFT MENU */  
-.left-menu{  
-    position:fixed;  
-    top:120px;  
-    left:20px;  
-    display:flex;  
-    flex-direction:column;  
-    gap:10px;  
-    z-index:10000;  
-}  
-.left-menu button{  
-    padding:10px;  
-    border:none;  
-    border-radius:6px;  
-    background:#00c6ff;  
-    color: white;
-    cursor:pointer;  
-    font-weight: bold;
-}  
-  
-/* 🔥 MODALS */  
-.modal{  
-    position:fixed;  
-    top:50%;  
-    left:50%;  
-    transform:translate(-50%,-50%);  
-    background:rgba(10, 10, 30, 0.98);  
-    padding:30px;  
-    border-radius:15px;  
-    display:none;  
-    z-index:99999;  
-    min-width: 400px;
-    border: 2px solid #00c6ff;
-    box-shadow: 0 0 30px rgba(0, 198, 255, 0.3);
-}  
-
-/* 🔥 TUTORIAL VIDEO */
-.video-container {
-    position: relative;
-    padding-bottom: 56.25%;
-    height: 0;
-}
-.video-container iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-}
-
-/* 🔥 ADMIN TABLE */
+<title>Beginner Typing Speed Test</title>  
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&family=Pacifico&display=swap" rel="stylesheet">  
+<style>  
+body { margin:0; font-family:'Roboto Mono', monospace; background:#1a1a2e; color:white; overflow:hidden; }  
+.left-menu{ position:fixed; top:120px; left:20px; display:flex; flex-direction:column; gap:10px; z-index:10000; }  
+.left-menu button{ padding:10px; border:none; border-radius:6px; background:#00c6ff; color: white; cursor:pointer; font-weight: bold; }  
+.modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(10, 10, 30, 0.98); padding:30px; border-radius:15px; display:none; z-index:99999; min-width: 400px; border: 2px solid #00c6ff; box-shadow: 0 0 30px rgba(0, 198, 255, 0.3); }  
+.video-container { position: relative; padding-bottom: 56.25%; height: 0; }
+.video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 #statsTable { margin-top: 20px; max-height: 300px; overflow-y: auto; }
 table { width: 100%; border-collapse: collapse; color: white; font-size: 14px; }
 th, td { border: 1px solid #333; padding: 12px; text-align: center; }
 th { background: #0072ff; color: white; }
-  
-.user-circle{  
-    background:#00c6ff;  
-    padding:8px 15px;  
-    border-radius:20px;  
-}  
-  
-#welcomeScreen{  
-    position:fixed;  top:0; left:0; width:100%; height:100%;  
-    background:linear-gradient(135deg,#000428,#004e92);  
-    display:flex; justify-content:center; align-items:center;  
-    flex-direction:column; z-index:100000;  
-}  
-  
+.user-circle{ background:#00c6ff; padding:8px 15px; border-radius:20px; }  
+#welcomeScreen{ position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg,#000428,#004e92); display:flex; justify-content:center; align-items:center; flex-direction:column; z-index:100000; }  
 #welcomeText{ font-size:45px; font-family:'Pacifico', cursive; color:#00ffff; text-shadow:0 0 20px #00ffff; }  
 .start-btn{ margin-top:20px; padding:12px 25px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; cursor:pointer; font-size:16px; }  
 .header { width:100%; display:flex; justify-content:space-between; padding:20px 50px; background:rgba(0,0,0,0.3); position:fixed; top:0; font-family:'Pacifico', cursive; box-sizing: border-box; }  
@@ -100,7 +34,9 @@ th { background: #0072ff; color: white; }
 #timer { font-size:28px; color:#00ffcc; text-shadow:0 0 10px #00ffff; margin-bottom:15px; }  
 .btn { margin:15px; padding:12px 30px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; font-size:16px; cursor:pointer; }  
 .test-box { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); display:none; text-align:center; background:rgba(255,255,255,0.1); padding:25px; border-radius:15px; }  
-</style>  </head>  <body onclick="focusInput();">  
+</style>  
+</head>  
+<body onclick="focusInput();">  
 
 <div class="left-menu">  
 <button onclick="showTest()">Test</button>  
@@ -170,8 +106,6 @@ th { background: #0072ff; color: white; }
 </div>  
 
 <script>  
-  
-/* SYSTEM DATA */  
 let users = {"admin":"1234"};  
 let userStats = {"admin": { attempts: 0, bestWpm: 0, accuracy: 0 }};
 let currentUser = null;  
@@ -182,7 +116,6 @@ function closeAll(){
     testBox.style.display="none";  
     adminPanel.style.display="none";
     tutorialBox.style.display="none";
-    // Stop video on close
     let iframe = tutorialBox.querySelector('iframe');
     let src = iframe.src;
     iframe.src = src;
@@ -229,14 +162,12 @@ function openAdmin(){
   
 function stopTyping(){ clearInterval(timer); hiddenInput.blur(); }  
   
-/* 🔥 ORIGINAL TYPING SOUND */  
 const typeSound = new Audio('https://www.soundjay.com/communication/typewriter-key-1.mp3');
 function playKeySound(){  
     typeSound.currentTime = 0;
-    typeSound.play();
+    typeSound.play().catch(e => console.log("Sound blocked"));
 }  
   
-/* GAME LOGIC */  
 let paragraphs=["Technology is evolving rapidly in today's world and typing is an essential skill for everyone."];  
 let currentText="",timer,timeLeft=60;  
 let startTime,totalTyped=0;  
@@ -273,7 +204,6 @@ hiddenInput.addEventListener("input", function(){
         else { spans[i].classList.add("wrong"); spans[i].classList.remove("correct"); }  
     }  
     
-    /* 🔥 CHANGE: TIMER STOPS WHEN ALL LETTERS TYPED */
     if(input === currentText) {
         clearInterval(timer); 
         finishTest(); 
@@ -302,12 +232,10 @@ function restartTest(){ timeLeft=60; loadText(); }
 function showTest(){ stopTyping(); closeAll(); testBox.style.display="block"; }  
 function startTest(t){ timeLeft=t; testBox.style.display="none"; loadText(); }  
 function startSite(){ welcomeScreen.style.display="none"; loadText(); }  
-  
-</script>  </body>  
+</script>  
+</body>  
 </html>  
 """
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-```
