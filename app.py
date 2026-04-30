@@ -12,12 +12,7 @@ def home():
 
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&family=Pacifico&display=swap" rel="stylesheet">
 
-<!-- 🎆 ADDED LIBRARY -->
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
 <style>
-
-/* ===================== ORIGINAL BODY ===================== */
 body {
     margin:0;
     font-family:'Roboto Mono', monospace;
@@ -26,7 +21,7 @@ body {
     overflow:hidden;
 }
 
-/* ===================== LEFT MENU ===================== */
+/* 🔥 LEFT BUTTONS (ADDED) */
 .left-menu{
     position:fixed;
     top:120px;
@@ -44,7 +39,7 @@ body {
     cursor:pointer;
 }
 
-/* ===================== MODAL ===================== */
+/* 🔥 MODAL CENTER (ADDED) */
 .modal{
     position:fixed;
     top:50%;
@@ -64,35 +59,14 @@ body {
     border-radius:5px;
 }
 
-/* ===================== USER UI ===================== */
+/* 🔥 USER CIRCLE (ADDED) */
 .user-circle{
     background:#00c6ff;
     padding:8px 15px;
     border-radius:20px;
 }
 
-/* ===================== POPUP (ADDED) ===================== */
-.popup-msg{
-    position:fixed;
-    top:20%;
-    left:50%;
-    transform:translateX(-50%);
-    background:#00ff88;
-    color:black;
-    padding:10px 20px;
-    border-radius:10px;
-    font-weight:bold;
-    animation:fade 2s ease;
-    z-index:99999;
-}
-
-@keyframes fade{
-    0%{opacity:0; transform:translate(-50%,-20px);}
-    50%{opacity:1;}
-    100%{opacity:0; transform:translate(-50%,0);}
-}
-
-/* ===================== ORIGINAL SCREEN ===================== */
+/* 🔥 ORIGINAL CSS SAME */
 #welcomeScreen{
     position:fixed;
     top:0;
@@ -125,7 +99,6 @@ body {
     font-size:16px;
 }
 
-/* ===================== HEADER ===================== */
 .header {
     width:100%;
     display:flex;
@@ -138,7 +111,6 @@ body {
 }
 .header h2{color:#00ffff;}
 
-/* ===================== CENTER ===================== */
 .center {
     position:absolute;
     top:55%;
@@ -166,22 +138,9 @@ body {
     font-size:28px;
     color:#00ffcc;
     text-shadow:0 0 10px #00ffff;
+    margin-bottom:15px;
 }
 
-/* ===================== TEST BOX ===================== */
-.test-box {
-    position:fixed;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    display:none;
-    text-align:center;
-    background:rgba(255,255,255,0.1);
-    padding:25px;
-    border-radius:15px;
-}
-
-/* ===================== BUTTON ===================== */
 .btn {
     margin:15px;
     padding:12px 30px;
@@ -193,38 +152,50 @@ body {
     cursor:pointer;
 }
 
+/* 🔥 TEST CENTER (ONLY POSITION CHANGE) */
+.test-box {
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    display:none;
+    text-align:center;
+    background:rgba(255,255,255,0.1);
+    padding:25px;
+    border-radius:15px;
+}
 </style>
 </head>
 
 <body onclick="focusInput(); unlockAudio();">
 
-<!-- LEFT MENU -->
+<!-- 🔥 LEFT MENU (ADDED) -->
 <div class="left-menu">
 <button onclick="showTest()">Test</button>
 <button onclick="openLogin()">Login</button>
 <button onclick="openCreate()">Create Account</button>
 </div>
 
-<!-- LOGIN -->
-<div class="modal" id="loginBox">
+<!-- 🔥 LOGIN -->
+<div class="modal" id="loginBox" onclick="event.stopPropagation()">
 <h3>Login</h3>
-<input type="text" id="username">
-<input type="password" id="password">
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
 <button onclick="login()">Login</button>
 </div>
 
-<!-- CREATE -->
-<div class="modal" id="createBox">
+<!-- 🔥 CREATE ACCOUNT -->
+<div class="modal" id="createBox" onclick="event.stopPropagation()">
 <h3>Create Account</h3>
-<input type="text" id="newUsername">
-<input type="password" id="newPassword">
+<input type="text" id="newUsername" placeholder="Username">
+<input type="password" id="newPassword" placeholder="Password">
 <button onclick="createAccount()">Create</button>
 </div>
 
-<!-- WELCOME -->
+<!-- 🔥 ORIGINAL WELCOME -->
 <div id="welcomeScreen">
-<div id="welcomeText">Welcome 🚀</div>
-<button class="start-btn" onclick="startSite()">Start</button>
+    <div id="welcomeText">Welcome 🚀</div>
+    <button class="start-btn" onclick="startSite()">Start</button>
 </div>
 
 <div class="header">
@@ -237,48 +208,117 @@ body {
 <div id="task"></div>
 <input id="hiddenInput">
 <div id="result"></div>
+
+<div>
+<button class="btn" onclick="nextTest()" id="nextBtn" style="display:none;">Next</button>
+<button class="btn" onclick="restartTest()" id="restartBtn" style="display:none;">Restart</button>
+</div>
 </div>
 
 <div class="test-box" id="testBox">
+<h2>Select Time</h2>
 <button onclick="startTest(60)">1 Min</button>
+<button onclick="startTest(180)">3 Min</button>
+<button onclick="startTest(300)">5 Min</button>
+<button onclick="startTest(600)">10 Min</button>
 </div>
 
 <script>
 
-/* ================= USERS ================= */
-let users={"admin":"1234"};
-let currentUser=null;
+/* USERS (ADDED) */
+let users = {"admin":"1234"};
+let currentUser = null;
 
-let correctTyped=0;
-let bestWPM=0;
+/* CLOSE ALL (ADDED) */
+function closeAll(){
+    loginBox.style.display="none";
+    createBox.style.display="none";
+    testBox.style.display="none";
+}
 
-/* ================= AUDIO ================= */
+/* LOGIN */
+function openLogin(){
+    stopTyping();
+    closeAll();
+    loginBox.style.display="block";
+    username.focus();
+}
+
+function login(){
+    let u=username.value;
+    let p=password.value;
+
+    if(users[u] && users[u]==p){
+        currentUser=u;
+        userDisplay.innerHTML = "<span class='user-circle'>👤 "+u+"</span> <button onclick='logout()'>Logout</button>";
+        alert("Login Successful");
+        closeAll();
+    } else{
+        alert("Wrong Username or Password");
+    }
+}
+
+/* CREATE */
+function openCreate(){
+    stopTyping();
+    closeAll();
+    createBox.style.display="block";
+    newUsername.focus();
+}
+
+function createAccount(){
+    let u=newUsername.value;
+    let p=newPassword.value;
+
+    if(u && p){
+        users[u]=p;
+        alert("Account Created");
+        closeAll();
+    } else{
+        alert("Enter Username & Password");
+    }
+}
+
+/* LOGOUT */
+function logout(){
+    currentUser=null;
+    userDisplay.innerHTML="";
+}
+
+/* STOP TYPING (ADDED) */
+function stopTyping(){
+    clearInterval(timer);
+    hiddenInput.blur();
+}
+
+/* ORIGINAL AUDIO */
 let audioCtx;
+let volume = 0.1;
+
 function unlockAudio(){
- if(!audioCtx){
-  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
- }
+    if(!audioCtx){
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
 }
 
-/* ================= POPUP ================= */
-function showPopup(msg){
- let div=document.createElement("div");
- div.className="popup-msg";
- div.innerText=msg;
- document.body.appendChild(div);
- setTimeout(()=>div.remove(),2000);
+function playKeySound(){
+    if(!audioCtx) return;
+
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+
+    osc.type = "square";
+    osc.frequency.value = 200 + Math.random()*100;
+    gain.gain.value = volume;
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.05);
 }
 
-/* ================= FIREWORK ================= */
-function fire(){
- confetti({
-  particleCount:120,
-  spread:80,
-  origin:{y:0.6}
- });
-}
-
-/* ================= TEXT ================= */
+/* ORIGINAL TEST LOGIC */
 let paragraphs=[
 "Technology is evolving rapidly in today's world and typing is an essential skill for everyone."
 ];
@@ -286,90 +326,94 @@ let paragraphs=[
 let currentText="",timer,timeLeft=60;
 let startTime,totalTyped=0;
 
-/* ================= LOAD ================= */
 function loadText(){
- result.innerHTML="";
- currentText=paragraphs[0];
+    result.innerHTML="";
+    nextBtn.style.display="none";
+    restartBtn.style.display="none";
 
- let html="";
- for(let i=0;i<currentText.length;i++){
-  html+="<span>"+currentText[i]+"</span>";
- }
- task.innerHTML=html;
+    currentText=paragraphs[0];
 
- hiddenInput.value="";
- startTime=new Date().getTime();
+    let html="";
+    for(let i=0;i<currentText.length;i++){
+        html+="<span>"+currentText[i]+"</span>";
+    }
+    task.innerHTML=html;
 
- clearInterval(timer);
- timer=setInterval(updateTimer,1000);
+    hiddenInput.value="";
+    startTime=new Date().getTime();
+
+    clearInterval(timer);
+    timer=setInterval(updateTimer,1000);
 }
 
-/* ================= TIMER ================= */
 function updateTimer(){
- timeLeft--;
- timer.innerText="⏱ "+timeLeft;
- if(timeLeft<=0) finishTest();
+    timeLeft--;
+    document.getElementById("timer").innerText="⏱ "+timeLeft+" sec";
+    if(timeLeft<=0) finishTest();
 }
 
-/* ================= INPUT ================= */
 function focusInput(){
- hiddenInput.focus();
+    hiddenInput.focus();
 }
 
 hiddenInput.addEventListener("input",function(){
 
- let input=this.value;
- let spans=document.querySelectorAll("#task span");
+    playKeySound();
 
- totalTyped=input.length;
- correctTyped=0;
+    let input=this.value;
+    let spans=document.querySelectorAll("#task span");
 
- for(let i=0;i<spans.length;i++){
-  if(input[i]===currentText[i]){
-   spans[i].classList.add("correct");
-   correctTyped++;
-  } else {
-   spans[i].classList.add("wrong");
-  }
- }
+    totalTyped=input.length;
 
- if(input===currentText) finishTest();
+    for(let i=0;i<spans.length;i++){
+        if(input[i]==null){
+            spans[i].classList.remove("correct","wrong");
+        }
+        else if(input[i]===currentText[i]){
+            spans[i].classList.add("correct");
+            spans[i].classList.remove("wrong");
+        } else {
+            spans[i].classList.add("wrong");
+            spans[i].classList.remove("correct");
+        }
+    }
+
+    if(input===currentText) finishTest();
 });
 
-/* ================= FINISH ================= */
 function finishTest(){
- clearInterval(timer);
+    clearInterval(timer);
 
- let wpm=Math.round((totalTyped/5)/((new Date().getTime()-startTime)/60000));
- let accuracy=Math.round((correctTyped/totalTyped)*100)||0;
+    let time=(new Date().getTime()-startTime)/60000;
+    let wpm=Math.round((totalTyped/5)/time);
 
- result.innerHTML="🎉 WPM: "+wpm+"<br>🎯 Accuracy: "+accuracy+"%";
+    result.innerHTML="🎉 WPM: "+wpm;
 
- if(wpm>bestWPM){
-  bestWPM=wpm;
-  fire();
-  showPopup("🎉 New Best Score!");
- }
+    nextBtn.style.display="inline-block";
+    restartBtn.style.display="inline-block";
 }
 
-/* ================= START ================= */
-function startSite(){
- welcomeScreen.style.display="none";
- loadText();
-}
+function nextTest(){ timeLeft=60; loadText(); }
+function restartTest(){ timeLeft=60; loadText(); }
 
 function showTest(){
- testBox.style.display="block";
+    stopTyping();
+    closeAll();
+    testBox.style.display="block";
 }
 
 function startTest(t){
- timeLeft=t;
- testBox.style.display="none";
- loadText();
+    timeLeft=t;
+    testBox.style.display="none";
+    loadText();
+}
+
+function startSite(){
+    welcomeScreen.style.display="none";
+    loadText();
 }
 
 </script>
-
 </body>
 </html>
 """
