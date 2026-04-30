@@ -16,7 +16,7 @@ body {
     overflow:hidden;  
 }  
   
-/* 🔥 LEFT BUTTONS */  
+/* 🔥 LEFT MENU */  
 .left-menu{  
     position:fixed;  
     top:120px;  
@@ -24,50 +24,49 @@ body {
     display:flex;  
     flex-direction:column;  
     gap:10px;  
-    z-index:9999;  
+    z-index:10000;  
 }  
 .left-menu button{  
     padding:10px;  
     border:none;  
     border-radius:6px;  
     background:#00c6ff;  
+    color: white;
     cursor:pointer;  
+    font-weight: bold;
 }  
   
-/* 🔥 MODAL CENTER */  
+/* 🔥 MODALS */  
 .modal{  
     position:fixed;  
     top:50%;  
     left:50%;  
     transform:translate(-50%,-50%);  
-    background:rgba(0,0,0,0.95);  
-    padding:20px;  
-    border-radius:10px;  
+    background:rgba(10, 10, 30, 0.98);  
+    padding:30px;  
+    border-radius:15px;  
     display:none;  
-    z-index:9999;  
-    min-width: 300px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    z-index:99999;  
+    min-width: 400px;
+    border: 2px solid #00c6ff;
+    box-shadow: 0 0 30px rgba(0, 198, 255, 0.3);
 }  
 .modal input{  
     width:100%;  
-    margin:8px 0;  
-    padding:8px;  
+    margin:10px 0;  
+    padding:10px;  
     border:none;  
     border-radius:5px;  
     box-sizing: border-box;
 }  
 
-/* 🔥 ADMIN PANEL TABLE */
-#adminPanel {
-    max-height: 400px;
-    overflow-y: auto;
-    width: 80%;
-}
-table { width: 100%; border-collapse: collapse; margin-top: 10px; color: white; }
-th, td { border: 1px solid #444; padding: 10px; text-align: center; }
-th { background: #0072ff; }
+/* 🔥 ADMIN TABLE */
+#statsTable { margin-top: 20px; max-height: 300px; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; color: white; font-size: 14px; }
+th, td { border: 1px solid #333; padding: 12px; text-align: center; }
+th { background: #0072ff; color: white; }
+tr:nth-child(even) { background: rgba(255,255,255,0.05); }
   
-/* 🔥 USER CIRCLE */  
 .user-circle{  
     background:#00c6ff;  
     padding:8px 15px;  
@@ -75,131 +74,58 @@ th { background: #0072ff; }
 }  
   
 #welcomeScreen{  
-    position:fixed;  
-    top:0;  
-    left:0;  
-    width:100%;  
-    height:100%;  
+    position:fixed;  top:0; left:0; width:100%; height:100%;  
     background:linear-gradient(135deg,#000428,#004e92);  
-    display:flex;  
-    justify-content:center;  
-    align-items:center;  
-    flex-direction:column;  
-    z-index:99999;  
+    display:flex; justify-content:center; align-items:center;  
+    flex-direction:column; z-index:100000;  
 }  
   
-#welcomeText{  
-    font-size:45px;  
-    font-family:'Pacifico', cursive;  
-    color:#00ffff;  
-    text-shadow:0 0 20px #00ffff;  
-}  
+#welcomeText{ font-size:45px; font-family:'Pacifico', cursive; color:#00ffff; text-shadow:0 0 20px #00ffff; }  
   
-.start-btn{  
-    margin-top:20px;  
-    padding:12px 25px;  
-    border:none;  
-    border-radius:10px;  
-    background:linear-gradient(45deg,#00c6ff,#0072ff);  
-    color:white;  
-    cursor:pointer;  
-    font-size:16px;  
-}  
+.start-btn{ margin-top:20px; padding:12px 25px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; cursor:pointer; font-size:16px; }  
   
-.header {  
-    width:100%;  
-    display:flex;  
-    justify-content:space-between;  
-    padding:20px 50px;  
-    background:rgba(0,0,0,0.3);  
-    position:fixed;  
-    top:0;  
-    font-family:'Pacifico', cursive;  
-    box-sizing: border-box;
-}  
+.header { width:100%; display:flex; justify-content:space-between; padding:20px 50px; background:rgba(0,0,0,0.3); position:fixed; top:0; font-family:'Pacifico', cursive; box-sizing: border-box; }  
 .header h2{color:#00ffff; margin:0;}  
   
-.center {  
-    position:absolute;  
-    top:55%;  
-    left:50%;  
-    transform:translate(-50%,-50%);  
-    width:80%;  
-    text-align:center;  
-}  
-  
-#task {  
-    font-size:32px;  
-    line-height:2;  
-    color:#aaa;  
-}  
-  
+.center { position:absolute; top:55%; left:50%; transform:translate(-50%,-50%); width:80%; text-align:center; }  
+#task { font-size:32px; line-height:2; color:#aaa; }  
 .correct {color:#00ff88;}  
 .wrong {color:#ff4d4d;}  
+#hiddenInput { opacity:0; position:absolute; }  
+#timer { font-size:28px; color:#00ffcc; text-shadow:0 0 10px #00ffff; margin-bottom:15px; }  
+.btn { margin:15px; padding:12px 30px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; font-size:16px; cursor:pointer; }  
   
-#hiddenInput {  
-    opacity:0;  
-    position:absolute;  
-}  
-  
-#timer {  
-    font-size:28px;  
-    color:#00ffcc;  
-    text-shadow:0 0 10px #00ffff;  
-    margin-bottom:15px;  
-}  
-  
-.btn {  
-    margin:15px;  
-    padding:12px 30px;  
-    border:none;  
-    border-radius:10px;  
-    background:linear-gradient(45deg,#00c6ff,#0072ff);  
-    color:white;  
-    font-size:16px;  
-    cursor:pointer;  
-}  
-  
-.test-box {  
-    position:fixed;  
-    top:50%;  
-    left:50%;  
-    transform:translate(-50%,-50%);  
-    display:none;  
-    text-align:center;  
-    background:rgba(255,255,255,0.1);  
-    padding:25px;  
-    border-radius:15px;  
-}  
+.test-box { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); display:none; text-align:center; background:rgba(255,255,255,0.1); padding:25px; border-radius:15px; }  
 </style>  </head>  <body onclick="focusInput(); unlockAudio();">  
 
 <div class="left-menu">  
 <button onclick="showTest()">Test</button>  
 <button onclick="openLogin()">Login</button>  
 <button onclick="openCreate()">Create Account</button>  
-<button id="adminBtn" style="display:none; background:#ff4d4d;" onclick="openAdmin()">Admin Panel</button>
+<button id="adminBtn" style="display:none; background:#ff4d4d;" onclick="openAdmin()">ADMIN PANEL</button>
 </div>  
 
 <div class="modal" id="loginBox" onclick="event.stopPropagation()">  
 <h3>Login</h3>  
 <input type="text" id="username" placeholder="Username">  
 <input type="password" id="password" placeholder="Password">  
-<button onclick="login()">Login</button>  
-<button onclick="closeAll()">Close</button>
+<button class="btn" onclick="login()">Login</button>  
+<button class="btn" style="background:gray" onclick="closeAll()">Close</button>
 </div>  
 
 <div class="modal" id="createBox" onclick="event.stopPropagation()">  
 <h3>Create Account</h3>  
 <input type="text" id="newUsername" placeholder="Username">  
 <input type="password" id="newPassword" placeholder="Password">  
-<button onclick="createAccount()">Create</button>  
-<button onclick="closeAll()">Close</button>
+<button class="btn" onclick="createAccount()">Create</button>  
+<button class="btn" style="background:gray" onclick="closeAll()">Close</button>
 </div>  
 
 <div class="modal" id="adminPanel" onclick="event.stopPropagation()">
-    <h3>Administrator Dashboard</h3>
+    <h2 style="color:#00ffff">Admin Leaderboard</h2>
     <div id="statsTable"></div>
-    <button class="btn" onclick="closeAll()">Close</button>
+    <br>
+    <button class="btn" onclick="closeAll()">Close Dashboard</button>
 </div>
 
 <div id="welcomeScreen">  
@@ -208,7 +134,7 @@ th { background: #0072ff; }
 </div>  
 
 <div class="header">  
-<h2>Welcome to Beginner Typing Speed Test</h2>  
+<h2>Typing Speed Test</h2>  
 <div id="userDisplay"></div>  
 </div>  
 
@@ -232,14 +158,13 @@ th { background: #0072ff; }
 
 <script>  
   
-/* USERS & STATS (MODIFIED) */  
+/* SYSTEM DATA */  
 let users = {"admin":"1234"};  
 let userStats = {
     "admin": { attempts: 0, bestWpm: 0, accuracy: 0 }
 };
 let currentUser = null;  
   
-/* CLOSE ALL */  
 function closeAll(){  
     loginBox.style.display="none";  
     createBox.style.display="none";  
@@ -247,7 +172,6 @@ function closeAll(){
     adminPanel.style.display="none";
 }  
   
-/* LOGIN */  
 function openLogin(){  
     stopTyping();  
     closeAll();  
@@ -256,26 +180,27 @@ function openLogin(){
 }  
   
 function login(){  
-    let u=username.value;  
-    let p=password.value;  
+    let u = document.getElementById("username").value;  
+    let p = document.getElementById("password").value;  
   
-    if(users[u] && users[u]==p){  
-        currentUser=u;  
-        userDisplay.innerHTML = "<span class='user-circle'>👤 "+u+"</span> <button onclick='logout()'>Logout</button>";
+    if(users[u] && users[u] == p){  
+        currentUser = u;  
+        document.getElementById("userDisplay").innerHTML = "<span class='user-circle'>👤 "+u+"</span> <button onclick='logout()'>Logout</button>";  
         
-        // Show Admin Button if user is admin
-        if(u === "admin") {
+        // REVEAL ADMIN BUTTON IF ADMIN
+        if(u === "admin"){
             document.getElementById("adminBtn").style.display = "block";
+        } else {
+            document.getElementById("adminBtn").style.display = "none";
         }
-        
-        alert("Login Successful");  
+
+        alert("Login Successful! Welcome " + u);  
         closeAll();  
     } else{  
         alert("Wrong Username or Password");  
     }  
 }  
   
-/* CREATE */  
 function openCreate(){  
     stopTyping();  
     closeAll();  
@@ -284,40 +209,39 @@ function openCreate(){
 }  
   
 function createAccount(){  
-    let u=newUsername.value;  
-    let p=newPassword.value;  
+    let u = document.getElementById("newUsername").value;  
+    let p = document.getElementById("newPassword").value;  
   
     if(u && p){  
-        users[u]=p;  
-        userStats[u] = { attempts: 0, bestWpm: 0, accuracy: 0 }; // Initialize Stats
-        alert("Account Created");  
+        users[u] = p;  
+        userStats[u] = { attempts: 0, bestWpm: 0, accuracy: 0 }; 
+        alert("Account Created for " + u);  
         closeAll();  
     } else{  
         alert("Enter Username & Password");  
     }  
 }  
   
-/* LOGOUT */  
 function logout(){  
-    currentUser=null;  
-    userDisplay.innerHTML="";  
+    currentUser = null;  
+    document.getElementById("userDisplay").innerHTML = "";  
     document.getElementById("adminBtn").style.display = "none";
 }  
 
-/* ADMIN PANEL (NEW) */
+/* ADMIN DASHBOARD LOGIC */
 function openAdmin(){
     stopTyping();
     closeAll();
-    adminPanel.style.display = "block";
+    document.getElementById("adminPanel").style.display = "block";
     
-    // Sort users by WPM (Ranked)
+    // Sort all users by WPM (Ranking)
     let sortedUsers = Object.keys(userStats).sort((a,b) => userStats[b].bestWpm - userStats[a].bestWpm);
     
-    let html = "<table><tr><th>Rank</th><th>Name</th><th>Attempts</th><th>Best WPM</th><th>Accuracy %</th></tr>";
+    let html = "<table><tr><th>Rank</th><th>User</th><th>Tests</th><th>Max WPM</th><th>Accuracy</th></tr>";
     sortedUsers.forEach((name, index) => {
         let s = userStats[name];
         html += `<tr>
-            <td>${index + 1}</td>
+            <td>#${index + 1}</td>
             <td>${name}</td>
             <td>${s.attempts}</td>
             <td>${s.bestWpm}</td>
@@ -328,44 +252,27 @@ function openAdmin(){
     document.getElementById("statsTable").innerHTML = html;
 }
   
-/* STOP TYPING */  
 function stopTyping(){  
     clearInterval(timer);  
-    hiddenInput.blur();  
+    document.getElementById("hiddenInput").blur();  
 }  
   
-/* ORIGINAL AUDIO */  
+/* AUDIO */  
 let audioCtx;  
-let volume = 0.1;  
-  
-function unlockAudio(){  
-    if(!audioCtx){  
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();  
-    }  
-}  
-  
+function unlockAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }  
 function playKeySound(){  
     if(!audioCtx) return;  
-  
     let osc = audioCtx.createOscillator();  
     let gain = audioCtx.createGain();  
-  
     osc.type = "square";  
     osc.frequency.value = 200 + Math.random()*100;  
-    gain.gain.value = volume;  
-  
-    osc.connect(gain);  
-    gain.connect(audioCtx.destination);  
-  
-    osc.start();  
-    osc.stop(audioCtx.currentTime + 0.05);  
+    gain.gain.value = 0.05;  
+    osc.connect(gain); gain.connect(audioCtx.destination);  
+    osc.start(); osc.stop(audioCtx.currentTime + 0.05);  
 }  
   
-/* ORIGINAL TEST LOGIC */  
-let paragraphs=[  
-"Technology is evolving rapidly in today's world and typing is an essential skill for everyone."  
-];  
-  
+/* GAME LOGIC */  
+let paragraphs=["Technology is evolving rapidly in today's world and typing is an essential skill for everyone."];  
 let currentText="",timer,timeLeft=60;  
 let startTime,totalTyped=0;  
   
@@ -373,18 +280,12 @@ function loadText(){
     result.innerHTML="";  
     nextBtn.style.display="none";  
     restartBtn.style.display="none";  
-  
     currentText=paragraphs[0];  
-  
     let html="";  
-    for(let i=0;i<currentText.length;i++){  
-        html+="<span>"+currentText[i]+"</span>";  
-    }  
+    for(let i=0;i<currentText.length;i++){ html+="<span>"+currentText[i]+"</span>"; }  
     task.innerHTML=html;  
-  
     hiddenInput.value="";  
     startTime=new Date().getTime();  
-  
     clearInterval(timer);  
     timer=setInterval(updateTimer,1000);  
 }  
@@ -395,48 +296,31 @@ function updateTimer(){
     if(timeLeft<=0) finishTest();  
 }  
   
-function focusInput(){  
-    hiddenInput.focus();  
-}  
+function focusInput(){ document.getElementById("hiddenInput").focus(); }  
   
 hiddenInput.addEventListener("input",function(){  
-  
     playKeySound();  
-  
     let input=this.value;  
     let spans=document.querySelectorAll("#task span");  
-  
     totalTyped=input.length;  
-  
     for(let i=0;i<spans.length;i++){  
-        if(input[i]==null){  
-            spans[i].classList.remove("correct","wrong");  
-        }  
-        else if(input[i]===currentText[i]){  
-            spans[i].classList.add("correct");  
-            spans[i].classList.remove("wrong");  
-        } else {  
-            spans[i].classList.add("wrong");  
-            spans[i].classList.remove("correct");  
-        }  
+        if(input[i]==null) spans[i].classList.remove("correct","wrong");  
+        else if(input[i]===currentText[i]){ spans[i].classList.add("correct"); spans[i].classList.remove("wrong"); } 
+        else { spans[i].classList.add("wrong"); spans[i].classList.remove("correct"); }  
     }  
-  
     if(input===currentText) finishTest();  
 });  
   
 function finishTest(){  
     clearInterval(timer);  
-  
     let time=(new Date().getTime()-startTime)/60000;  
-    let wpm=Math.round((totalTyped/5)/time);  
-    
-    // Calculate accuracy
+    let wpm=Math.round((totalTyped/5)/time) || 0;  
     let correctChars = document.querySelectorAll(".correct").length;
     let acc = totalTyped > 0 ? Math.round((correctChars / totalTyped) * 100) : 0;
   
     result.innerHTML="🎉 WPM: "+wpm + " | Accuracy: " + acc + "%";  
   
-    // Update Stats for logged in user
+    // Save to Admin Stats
     if(currentUser) {
         userStats[currentUser].attempts++;
         if(wpm > userStats[currentUser].bestWpm) userStats[currentUser].bestWpm = wpm;
@@ -449,23 +333,9 @@ function finishTest(){
   
 function nextTest(){ timeLeft=60; loadText(); }  
 function restartTest(){ timeLeft=60; loadText(); }  
-  
-function showTest(){  
-    stopTyping();  
-    closeAll();  
-    testBox.style.display="block";  
-}  
-  
-function startTest(t){  
-    timeLeft=t;  
-    testBox.style.display="none";  
-    loadText();  
-}  
-  
-function startSite(){  
-    welcomeScreen.style.display="none";  
-    loadText();  
-}  
+function showTest(){ stopTyping(); closeAll(); testBox.style.display="block"; }  
+function startTest(t){ timeLeft=t; testBox.style.display="none"; loadText(); }  
+function startSite(){ welcomeScreen.style.display="none"; loadText(); }  
   
 </script>  </body>  
 </html>  
