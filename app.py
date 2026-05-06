@@ -23,6 +23,7 @@ def save_data(data):
         json.dump(data, f, indent=4)
 
 # --- ROUTES ---
+
 @app.route('/')
 def home():
     return render_template_string(HTML_CODE)
@@ -70,48 +71,53 @@ def admin_data():
 HTML_CODE = """
 <!DOCTYPE html>  <html>  
 <head>  
-<title>Typing Speed Test Pro</title>  
+<title>Beginner Typing Speed Test</title>  
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&family=Pacifico&display=swap" rel="stylesheet">  
 <style>  
-:root { --bg: #1a1a2e; --text: white; --primary: #00c6ff; --accent: #00ff88; }
+:root { --bg: #1a1a2e; --text: white; --primary: #00c6ff; }
 body { margin:0; font-family:'Roboto Mono', monospace; background: var(--bg); color: var(--text); overflow:hidden; transition: 0.3s; }  
 
 /* Themes */
-body.light-theme { --bg: #ffffff; --text: #1a1a2e; --primary: #0072ff; }
-body.neon-theme { --bg: #000; --text: #0f0; --primary: #f0f; --accent: #0ff; }
+body.light-theme { --bg: #f0f2f5; --text: #1a1a2e; --primary: #0072ff; }
+body.neon-theme { --bg: #000; --text: #0f0; --primary: #f0f; }
 body.matrix-theme { --bg: #000; --text: #00ff41; --primary: #003b00; }
 
 .left-menu{ position:fixed; top:120px; left:20px; display:flex; flex-direction:column; gap:10px; z-index:10000; }  
 .left-menu button{ padding:10px; border:none; border-radius:6px; background: var(--primary); color: white; cursor:pointer; font-weight: bold; }  
-
 .modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(10, 10, 30, 0.98); padding:30px; border-radius:15px; display:none; z-index:99999; min-width: 400px; border: 2px solid var(--primary); box-shadow: 0 0 30px rgba(0, 198, 255, 0.3); }  
-.modal input, .modal select { width:100%; margin:10px 0; padding:10px; border:none; border-radius:5px; box-sizing: border-box; }  
-
+.modal input, .modal select { width:100%; margin:10px 0; padding:10px; border:none; border-radius:5px; box-sizing: border-box; background: #222; color: white; }  
 #statsTable { margin-top: 20px; max-height: 300px; overflow-y: auto; }
 table { width: 100%; border-collapse: collapse; color: white; font-size: 14px; }
 th, td { border: 1px solid #333; padding: 12px; text-align: center; }
-th { background: var(--primary); color: white; }
-
+th { background: #0072ff; color: white; }
+tr:nth-child(even) { background: rgba(255,255,255,0.05); }
+.user-circle{ background: var(--primary); padding:8px 15px; border-radius:20px; }  
 #welcomeScreen{ position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg,#000428,#004e92); display:flex; justify-content:center; align-items:center; flex-direction:column; z-index:100000; }  
 #welcomeText{ font-size:45px; font-family:'Pacifico', cursive; color:#00ffff; text-shadow:0 0 20px #00ffff; }  
 .start-btn{ margin-top:20px; padding:12px 25px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; cursor:pointer; font-size:16px; }  
-
 .header { width:100%; display:flex; justify-content:space-between; padding:20px 50px; background:rgba(0,0,0,0.3); position:fixed; top:0; font-family:'Pacifico', cursive; box-sizing: border-box; }  
+.header h2{color:#00ffff; margin:0;}  
 .center { position:absolute; top:55%; left:50%; transform:translate(-50%,-50%); width:80%; text-align:center; }  
 #task { font-size:32px; line-height:2; color:#aaa; }  
-.correct {color: var(--accent);}  
+.correct {color:#00ff88;}  
 .wrong {color:#ff4d4d;}  
 #hiddenInput { opacity:0; position:absolute; }  
-#timer { font-size:28px; color: var(--primary); text-shadow:0 0 10px var(--primary); margin-bottom:15px; }  
-.btn { margin:10px; padding:12px 30px; border:none; border-radius:10px; background: var(--primary); color:white; font-size:16px; cursor:pointer; }  
+#timer { font-size:28px; color:#00ffcc; text-shadow:0 0 10px #00ffff; margin-bottom:15px; }  
+.btn { margin:10px; padding:12px 30px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; font-size:16px; cursor:pointer; }  
 
-#finishOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 200000; }
-#finishOverlay h1 { font-family: 'Pacifico', cursive; color: var(--primary); font-size: 60px; }
+#finishOverlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(10, 10, 30, 0.95);
+    display: none; justify-content: center; align-items: center;
+    flex-direction: column; z-index: 200000; text-align: center;
+}
+#finishOverlay h1 { font-family: 'Pacifico', cursive; color: #00ffff; font-size: 60px; margin: 0; }
+#finalScore { font-size: 28px; color: #00ff88; margin: 20px 0; }
 </style>  </head>  <body onclick="focusInput(); unlockAudio();">  
 
 <div id="finishOverlay">
     <h1>Congratulations! 🚀</h1>
-    <div id="finalScore" style="font-size:28px; margin:20px 0;"></div>
+    <div id="finalScore"></div>
     <div style="display:flex; gap:10px;">
         <button class="btn" onclick="nextLevel()">Next Level</button>
         <button class="btn" style="background:gray;" onclick="restartTest()">Restart</button>
@@ -127,7 +133,7 @@ th { background: var(--primary); color: white; }
 </div>  
 
 <div class="modal" id="settingsBox" onclick="event.stopPropagation()">
-    <h2 style="color:var(--primary)">Settings</h2>
+    <h2 style="color: var(--primary)">Settings</h2>
     <label>Theme:</label>
     <select id="themeSelect" onchange="changeTheme()">
         <option value="default">Midnight Dark</option>
@@ -135,10 +141,10 @@ th { background: var(--primary); color: white; }
         <option value="neon-theme">Neon Glow</option>
         <option value="matrix-theme">The Matrix</option>
     </select>
-    <label>Sound:</label>
+    <label>Audio:</label>
     <select id="audioSelect">
-        <option value="classic">Classic Click</option>
-        <option value="mechanical">Mechanical</option>
+        <option value="classic">Classic Square</option>
+        <option value="mechanical">Mechanical Keyboard</option>
         <option value="silent">No Sound</option>
     </select>
     <br><br>
@@ -162,7 +168,7 @@ th { background: var(--primary); color: white; }
 </div>  
 
 <div class="modal" id="adminPanel" onclick="event.stopPropagation()">
-    <h2 style="color:var(--primary)">Admin Leaderboard</h2>
+    <h2 style="color:#00ffff">Admin Leaderboard</h2>
     <div id="statsTable"></div>
     <br>
     <button class="btn" onclick="closeAll()">Close Dashboard</button>
@@ -179,111 +185,216 @@ th { background: var(--primary); color: white; }
 </div>  
 
 <div class="center">  
-<div id="timer">⏱ 60 sec</div>  
+<div id="timer"></div>  
 <div id="task"></div>  
 <input id="hiddenInput">  
 <div id="result"></div>  
+<div id="gameButtons" style="display:none;">  
+<button class="btn" onclick="nextLevel()">Next Level</button>  
+<button class="btn" onclick="restartTest()" style="background:gray;">Restart</button>  
+</div>  
 </div>  
 
 <div class="test-box" id="testBox" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(255,255,255,0.1); padding:25px; border-radius:15px; text-align:center;">  
 <h2>Select Time</h2>  
-<button class="btn" onclick="startTest(60)">1 Min</button>  
-<button class="btn" onclick="startTest(180)">3 Min</button>  
-<button class="btn" onclick="startTest(300)">5 Min</button>  
+<button onclick="startTest(60)">1 Min</button>  
+<button onclick="startTest(180)">3 Min</button>  
+<button onclick="startTest(300)">5 Min</button>  
+<button onclick="startTest(600)">10 Min</button>  
 </div>  
 
 <script>  
-let currentUser = null, level = 0, isPaused = false, testRunning = false;
-let audioCtx, timer, timeLeft=60, startTime, totalTyped=0;
+let currentUser = null;  
+let currentLevelIndex = 0;
+let isPaused = false;
+let testRunning = false;
+let audioCtx;
+let timer, timeLeft=60;  
+let startTime,totalTyped=0;  
 
-const levels = [
+const typingLevels = [
     "Technology is evolving rapidly in today's world.",
-    "Efficient typing skills are essential for productivity in the digital era.",
-    "The quick brown fox jumps over the lazy dog while the sun sets behind the hills.",
-    "Innovation distinguishes between a leader and a follower."
+    "Efficient typing skills are essential for productivity in the modern digital era.",
+    "The quick brown fox jumps over the lazy dog while the sun sets behind the green hills.",
+    "Quantum computing uses quantum-mechanical phenomena such as superposition and entanglement.",
+    "Complex systems require a profound understanding of architecture and design patterns to succeed."
 ];
 
 function closeAll(){  
-    loginBox.style.display="none"; createBox.style.display="none";  
-    adminPanel.style.display="none"; finishOverlay.style.display="none";
-    settingsBox.style.display="none"; if(typeof testBox !== 'undefined') testBox.style.display="none";
+    loginBox.style.display="none";  
+    createBox.style.display="none";  
+    settingsBox.style.display="none";
+    if(document.getElementById("testBox")) document.getElementById("testBox").style.display="none";  
+    adminPanel.style.display="none";
+    finishOverlay.style.display="none";
 }  
 
 function openSettings() { stopTyping(); closeAll(); settingsBox.style.display="block"; }
 function changeTheme() { document.body.className = document.getElementById("themeSelect").value; }
 
-function playKeySound(){  
-    let type = document.getElementById("audioSelect").value;
-    if(type === "silent" || !audioCtx) return;  
-    let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();  
-    osc.type = (type === "mechanical") ? "square" : "triangle";
-    osc.frequency.value = (type === "mechanical") ? 150 : 250;
-    gain.gain.value = 0.05; osc.connect(gain); gain.connect(audioCtx.destination);  
-    osc.start(); osc.stop(audioCtx.currentTime + 0.05);  
-}  
+function openLogin(){ stopTyping(); closeAll(); loginBox.style.display="block"; username.focus(); }  
 
 async function login(){  
-    let u = document.getElementById("username").value, p = document.getElementById("password").value;  
-    const res = await fetch('/api/login', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({u, p})});
-    if(res.ok){ currentUser = u; document.getElementById("userDisplay").innerHTML = "👤 "+u; closeAll(); } 
-    else alert("Wrong Login!");  
+    let u = document.getElementById("username").value;  
+    let p = document.getElementById("password").value;  
+    const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({u, p})
+    });
+    if(res.ok){  
+        currentUser = u;  
+        document.getElementById("userDisplay").innerHTML = "<span class='user-circle'>👤 "+u+"</span> <button onclick='logout()' style='background:none; border:1px solid #ff4d4d; color:#ff4d4d; border-radius:5px; margin-left:10px; cursor:pointer;'>Logout</button>";  
+        alert("Login Successful!");  
+        closeAll();  
+    } else{ alert("Wrong Username or Password"); }  
 }  
 
+function openCreate(){ stopTyping(); closeAll(); createBox.style.display="block"; newUsername.focus(); }  
+
+async function createAccount(){  
+    let u = document.getElementById("newUsername").value;  
+    let p = document.getElementById("newPassword").value;  
+    if(u && p){  
+        const res = await fetch('/api/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({u, p})
+        });
+        if(res.ok){ alert("Account Created for " + u); closeAll(); } 
+        else { alert("User already exists or error!"); }
+    } else{ alert("Enter Username & Password"); }  
+}  
+
+function logout(){ currentUser = null; document.getElementById("userDisplay").innerHTML = ""; }  
+
 async function openAdmin(){
-    stopTyping(); closeAll();
+    stopTyping();
+    closeAll();
     document.getElementById("adminPanel").style.display = "block";
     const res = await fetch('/api/admin_data');
     const userStats = await res.json();
     let sortedUsers = Object.keys(userStats).sort((a,b) => userStats[b].bestWpm - userStats[a].bestWpm);
-    let html = "<table><tr><th>Rank</th><th>User</th><th>WPM</th></tr>";
-    sortedUsers.forEach((name, index) => { html += `<tr><td>#${index+1}</td><td>${name}</td><td>${userStats[name].bestWpm}</td></tr>`; });
-    document.getElementById("statsTable").innerHTML = html + "</table>";
+    let html = "<table><tr><th>Rank</th><th>User</th><th>Tests</th><th>Max WPM</th><th>Accuracy</th></tr>";
+    sortedUsers.forEach((name, index) => {
+        let s = userStats[name];
+        html += `<tr><td>#${index + 1}</td><td>${name}</td><td>${s.attempts}</td><td>${s.bestWpm}</td><td>${s.accuracy}%</td></tr>`;
+    });
+    html += "</table>";
+    document.getElementById("statsTable").innerHTML = html;
 }
 
-function stopTyping(){ clearInterval(timer); isPaused = true; }  
-
-window.addEventListener("keydown", (e) => {
-    if(e.code === "Space" && isPaused && testRunning) { isPaused = false; timer = setInterval(updateTimer, 1000); }
-    if(e.code === "Enter" && testRunning) finishTest();
-});
-
-function loadText(){  
-    closeAll(); currentText = levels[level % levels.length]; 
-    let html=""; for(let i=0;i<currentText.length;i++){ html+="<span>"+currentText[i]+"</span>"; }  
-    task.innerHTML=html; hiddenInput.value=""; startTime = new Date().getTime();  
-    isPaused = false; testRunning = true; clearInterval(timer); timer = setInterval(updateTimer, 1000);  
+function stopTyping(){ 
+    clearInterval(timer); 
+    isPaused = true;
+    document.getElementById("hiddenInput").blur(); 
 }  
 
-function updateTimer(){ if(!isPaused){ timeLeft--; document.getElementById("timer").innerText="⏱ "+timeLeft+" sec"; if(timeLeft<=0) finishTest(); } }  
+function resumeTyping(){
+    if(isPaused && timeLeft > 0 && testRunning){
+        isPaused = false;
+        clearInterval(timer);
+        timer = setInterval(updateTimer, 1000);
+        document.getElementById("hiddenInput").focus();
+    }
+}
 
-hiddenInput.addEventListener("input", function() {  
+window.addEventListener("keydown", function(e) {
+    if(e.code === "Space" && isPaused && finishOverlay.style.display !== "flex" && testRunning) {
+        resumeTyping();
+        e.preventDefault();
+    }
+    if(e.code === "Enter" && testRunning) {
+        finishTest();
+    }
+});
+
+function unlockAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }  
+function playKeySound(){  
+    let type = document.getElementById("audioSelect").value;
+    if(type === "silent" || !audioCtx) return;  
+    let osc = audioCtx.createOscillator();  
+    let gain = audioCtx.createGain();  
+    
+    if(type === "mechanical") {
+        osc.type = "sawtooth";
+        osc.frequency.value = 150 + Math.random()*50;
+        gain.gain.value = 0.02;
+    } else {
+        osc.type = "square";
+        osc.frequency.value = 200 + Math.random()*100;
+        gain.gain.value = 0.05;
+    }
+    
+    osc.connect(gain); gain.connect(audioCtx.destination);  
+    osc.start(); osc.stop(audioCtx.currentTime + 0.05);  
+}  
+
+function loadText(){  
+    closeAll();
+    result.innerHTML=""; 
+    document.getElementById("gameButtons").style.display="none";  
+    currentText = typingLevels[currentLevelIndex % typingLevels.length]; 
+    let html="";  
+    for(let i=0;i<currentText.length;i++){ html+="<span>"+currentText[i]+"</span>"; }  
+    task.innerHTML=html; hiddenInput.value=""; 
+    startTime = new Date().getTime();  
+    isPaused = false;
+    testRunning = true;
+    clearInterval(timer); 
+    timer = setInterval(updateTimer, 1000);  
+}  
+
+function updateTimer(){  
+    if(!isPaused){
+        timeLeft--; 
+        document.getElementById("timer").innerText="⏱ "+timeLeft+" sec";  
+        if(timeLeft<=0) finishTest();  
+    }
+}  
+
+function focusInput(){ if(!isPaused && testRunning) document.getElementById("hiddenInput").focus(); }  
+
+hiddenInput.addEventListener("input",function(){  
     if(isPaused || !testRunning) return;
     playKeySound();  
-    let input=this.value, spans=document.querySelectorAll("#task span"); totalTyped=input.length;  
+    let input=this.value;  
+    let spans=document.querySelectorAll("#task span");  
+    totalTyped=input.length;  
     for(let i=0;i<spans.length;i++){  
-        if(input[i]==null) spans[i].className = "";  
-        else spans[i].className = (input[i]===currentText[i]) ? "correct" : "wrong";  
+        if(input[i]==null) spans[i].classList.remove("correct","wrong");  
+        else if(input[i]===currentText[i]){ spans[i].classList.add("correct"); spans[i].classList.remove("wrong"); } 
+        else { spans[i].classList.add("wrong"); spans[i].classList.remove("correct"); }  
     }  
     if(input===currentText) finishTest();  
 });  
 
 async function finishTest(){  
-    clearInterval(timer); testRunning = false;
+    clearInterval(timer);  
+    isPaused = true;
+    testRunning = false;
     let timeUsed = (new Date().getTime() - startTime) / 60000;  
     let wpm = Math.round((totalTyped/5)/timeUsed) || 0;  
-    let acc = Math.round((document.querySelectorAll(".correct").length / totalTyped) * 100) || 0;
-    document.getElementById("finalScore").innerText = wpm + " WPM | " + acc + "% Acc";
+    let correctChars = document.querySelectorAll(".correct").length;
+    let acc = totalTyped > 0 ? Math.round((correctChars / totalTyped) * 100) : 0;
+
+    document.getElementById("finalScore").innerText = "Speed: " + wpm + " WPM | Accuracy: " + acc + "%";
     document.getElementById("finishOverlay").style.display = "flex";
-    if(currentUser) await fetch('/api/update_stats', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({u: currentUser, wpm: wpm, acc: acc})});
+
+    if(currentUser) {
+        await fetch('/api/update_stats', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({u: currentUser, wpm: wpm, acc: acc})
+        });
+    }
 }  
 
-function nextLevel() { level++; timeLeft=60; loadText(); }
-function restartTest() { timeLeft=60; loadText(); }
-function showTest(){ closeAll(); testBox.style.display="block"; }  
-function startTest(t){ timeLeft=t; loadText(); }  
+function nextLevel() { currentLevelIndex++; timeLeft = 60; loadText(); }
+function restartTest() { timeLeft = 60; loadText(); }
+function showTest(){ stopTyping(); closeAll(); document.getElementById("testBox").style.display="block"; }  
+function startTest(t){ timeLeft=t; document.getElementById("testBox").style.display="none"; loadText(); }  
 function startSite(){ welcomeScreen.style.display="none"; loadText(); }  
-function focusInput(){ document.getElementById("hiddenInput").focus(); }
-function unlockAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
 </script>  
 </body>  
 </html>  
