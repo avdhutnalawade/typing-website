@@ -1,10 +1,75 @@
-from flask import Flask
+from flask import Flask, request, jsonify, render_template_string
+import json
+import os
 
 app = Flask(__name__)
 
+# --- BACKEND DATABASE LOGIC ---
+DB_FILE = 'database.json'
+
+def load_data():
+    if not os.path.exists(DB_FILE):
+        # Default data structure
+        initial_data = {
+            "users": {"admin": "1234"},
+            "userStats": {"admin": {"attempts": 0, "bestWpm": 0, "accuracy": 0}}
+        }
+        save_data(initial_data)
+        return initial_data
+    with open(DB_FILE, 'r') as f:
+        return json.load(f)
+
+def save_data(data):
+    with open(DB_FILE, 'w') as f:
+        json.dump(data, f, indent=4)
+
+# --- ROUTES ---
+
 @app.route('/')
 def home():
-    return """
+    return render_template_string(HTML_CODE)
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.json
+    db = load_data()
+    u, p = data.get('u'), data.get('p')
+    if db['users'].get(u) == p:
+        return jsonify({"status": "success", "stats": db['userStats'].get(u, {})})
+    return jsonify({"status": "fail"}), 401
+
+@app.route('/api/create', methods=['POST'])
+def create():
+    data = request.json
+    db = load_data()
+    u, p = data.get('u'), data.get('p')
+    if u in db['users']:
+        return jsonify({"status": "exists"}), 400
+    db['users'][u] = p
+    db['userStats'][u] = {"attempts": 0, "bestWpm": 0, "accuracy": 0}
+    save_data(db)
+    return jsonify({"status": "success"})
+
+@app.route('/api/update_stats', methods=['POST'])
+def update_stats():
+    data = request.json
+    db = load_data()
+    u = data.get('u')
+    if u in db['userStats']:
+        db['userStats'][u]['attempts'] += 1
+        if data.get('wpm') > db['userStats'][u]['bestWpm']:
+            db['userStats'][u]['bestWpm'] = data.get('wpm')
+        db['userStats'][u]['accuracy'] = data.get('acc')
+        save_data(db)
+    return jsonify({"status": "success"})
+
+@app.route('/api/admin_data')
+def admin_data():
+    db = load_data()
+    return jsonify(db['userStats'])
+
+# --- HTML / JS CODE ---
+HTML_CODE = """
 <!DOCTYPE html>  <html>  
 <head>  
 <title>Beginner Typing Speed Test</title>  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&family=Pacifico&display=swap" rel="stylesheet">  <style>  
@@ -158,11 +223,6 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 
 <script>  
   
-/* SYSTEM DATA */  
-let users = {"admin":"1234"};  
-let userStats = {
-    "admin": { attempts: 0, bestWpm: 0, accuracy: 0 }
-};
 let currentUser = null;  
   
 function closeAll(){  
@@ -178,23 +238,22 @@ function openLogin(){
     loginBox.style.display="block";  
     username.focus();  
 }  
-  
-function login(){  
+
+async function login(){  
     let u = document.getElementById("username").value;  
     let p = document.getElementById("password").value;  
   
-    if(users[u] && users[u] == p){  
+    const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({u, p})
+    });
+
+    if(res.ok){  
         currentUser = u;  
         document.getElementById("userDisplay").innerHTML = "<span class='user-circle'>👤 "+u+"</span> <button onclick='logout()'>Logout</button>";  
-        
-        // REVEAL ADMIN BUTTON IF ADMIN
-        if(u === "admin"){
-            document.getElementById("adminBtn").style.display = "block";
-        } else {
-            document.getElementById("adminBtn").style.display = "none";
-        }
-
-        alert("Login Successful! Welcome " + u);  
+        if(u === "admin") document.getElementById("adminBtn").style.display = "block";
+        alert("Login Successful!");  
         closeAll();  
     } else{  
         alert("Wrong Username or Password");  
@@ -208,15 +267,22 @@ function openCreate(){
     newUsername.focus();  
 }  
   
-function createAccount(){  
+async function createAccount(){  
     let u = document.getElementById("newUsername").value;  
     let p = document.getElementById("newPassword").value;  
   
     if(u && p){  
-        users[u] = p;  
-        userStats[u] = { attempts: 0, bestWpm: 0, accuracy: 0 }; 
-        alert("Account Created for " + u);  
-        closeAll();  
+        const res = await fetch('/api/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({u, p})
+        });
+        if(res.ok){
+            alert("Account Created for " + u);  
+            closeAll();  
+        } else {
+            alert("User already exists or error!");
+        }
     } else{  
         alert("Enter Username & Password");  
     }  
@@ -228,13 +294,14 @@ function logout(){
     document.getElementById("adminBtn").style.display = "none";
 }  
 
-/* ADMIN DASHBOARD LOGIC */
-function openAdmin(){
+async function openAdmin(){
     stopTyping();
     closeAll();
     document.getElementById("adminPanel").style.display = "block";
     
-    // Sort all users by WPM (Ranking)
+    const res = await fetch('/api/admin_data');
+    const userStats = await res.json();
+
     let sortedUsers = Object.keys(userStats).sort((a,b) => userStats[b].bestWpm - userStats[a].bestWpm);
     
     let html = "<table><tr><th>Rank</th><th>User</th><th>Tests</th><th>Max WPM</th><th>Accuracy</th></tr>";
@@ -311,7 +378,7 @@ hiddenInput.addEventListener("input",function(){
     if(input===currentText) finishTest();  
 });  
   
-function finishTest(){  
+async function finishTest(){  
     clearInterval(timer);  
     let time=(new Date().getTime()-startTime)/60000;  
     let wpm=Math.round((totalTyped/5)/time) || 0;  
@@ -320,11 +387,12 @@ function finishTest(){
   
     result.innerHTML="🎉 WPM: "+wpm + " | Accuracy: " + acc + "%";  
   
-    // Save to Admin Stats
     if(currentUser) {
-        userStats[currentUser].attempts++;
-        if(wpm > userStats[currentUser].bestWpm) userStats[currentUser].bestWpm = wpm;
-        userStats[currentUser].accuracy = acc;
+        await fetch('/api/update_stats', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({u: currentUser, wpm: wpm, acc: acc})
+        });
     }
 
     nextBtn.style.display="inline-block";  
