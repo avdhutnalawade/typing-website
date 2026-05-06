@@ -96,7 +96,7 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 .wrong {color:#ff4d4d;}  
 #hiddenInput { opacity:0; position:absolute; }  
 #timer { font-size:28px; color:#00ffcc; text-shadow:0 0 10px #00ffff; margin-bottom:15px; }  
-.btn { margin:15px; padding:12px 30px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; font-size:16px; cursor:pointer; }  
+.btn { margin:10px; padding:12px 30px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; font-size:16px; cursor:pointer; }  
 
 #finishOverlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -111,7 +111,10 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 <div id="finishOverlay">
     <h1>Congratulations! 🚀</h1>
     <div id="finalScore"></div>
-    <button class="btn" onclick="nextLevel()">Go to Next Level</button>
+    <div style="display:flex; gap:10px;">
+        <button class="btn" onclick="nextLevel()">Next Level</button>
+        <button class="btn" style="background:gray;" onclick="restartTest()">Restart</button>
+    </div>
 </div>
 
 <div class="left-menu">  
@@ -159,9 +162,9 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 <div id="task"></div>  
 <input id="hiddenInput">  
 <div id="result"></div>  
-<div>  
-<button class="btn" onclick="nextTest()" id="nextBtn" style="display:none;">Next</button>  
-<button class="btn" onclick="restartTest()" id="restartBtn" style="display:none;">Restart</button>  
+<div id="gameButtons" style="display:none;">  
+<button class="btn" onclick="nextLevel()">Next Level</button>  
+<button class="btn" onclick="restartTest()" style="background:gray;">Restart</button>  
 </div>  
 </div>  
 
@@ -177,6 +180,7 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 let currentUser = null;  
 let currentLevelIndex = 0;
 let isPaused = false;
+let testRunning = false;
 
 const typingLevels = [
     "Technology is evolving rapidly in today's world.",
@@ -189,7 +193,7 @@ const typingLevels = [
 function closeAll(){  
     loginBox.style.display="none";  
     createBox.style.display="none";  
-    if(typeof testBox !== 'undefined') testBox.style.display="none";  
+    if(document.getElementById("testBox")) document.getElementById("testBox").style.display="none";  
     adminPanel.style.display="none";
     finishOverlay.style.display="none";
 }  
@@ -206,7 +210,7 @@ async function login(){
     });
     if(res.ok){  
         currentUser = u;  
-        document.getElementById("userDisplay").innerHTML = "<span class='user-circle'>👤 "+u+"</span> <button onclick='logout()'>Logout</button>";  
+        document.getElementById("userDisplay").innerHTML = "<span class='user-circle'>👤 "+u+"</span> <button onclick='logout()' style='background:none; border:1px solid #ff4d4d; color:#ff4d4d; border-radius:5px; margin-left:10px; cursor:pointer;'>Logout</button>";  
         alert("Login Successful!");  
         closeAll();  
     } else{ alert("Wrong Username or Password"); }  
@@ -253,7 +257,7 @@ function stopTyping(){
 }  
 
 function resumeTyping(){
-    if(isPaused && timeLeft > 0){
+    if(isPaused && timeLeft > 0 && testRunning){
         isPaused = false;
         clearInterval(timer);
         timer = setInterval(updateTimer, 1000);
@@ -261,11 +265,14 @@ function resumeTyping(){
     }
 }
 
-// Space bar detection for resume
+// Space ani Enter detect karne
 window.addEventListener("keydown", function(e) {
-    if(e.code === "Space" && isPaused && finishOverlay.style.display !== "flex") {
+    if(e.code === "Space" && isPaused && finishOverlay.style.display !== "flex" && testRunning) {
         resumeTyping();
         e.preventDefault();
+    }
+    if(e.code === "Enter" && testRunning) {
+        finishTest();
     }
 });
 
@@ -286,13 +293,16 @@ let currentText="",timer,timeLeft=60;
 let startTime,totalTyped=0;  
 
 function loadText(){  
-    result.innerHTML=""; nextBtn.style.display="none"; restartBtn.style.display="none";  
+    closeAll();
+    result.innerHTML=""; 
+    document.getElementById("gameButtons").style.display="none";  
     currentText = typingLevels[currentLevelIndex % typingLevels.length]; 
     let html="";  
     for(let i=0;i<currentText.length;i++){ html+="<span>"+currentText[i]+"</span>"; }  
     task.innerHTML=html; hiddenInput.value=""; 
     startTime = new Date().getTime();  
     isPaused = false;
+    testRunning = true;
     clearInterval(timer); 
     timer = setInterval(updateTimer, 1000);  
 }  
@@ -305,10 +315,10 @@ function updateTimer(){
     }
 }  
 
-function focusInput(){ if(!isPaused) document.getElementById("hiddenInput").focus(); }  
+function focusInput(){ if(!isPaused && testRunning) document.getElementById("hiddenInput").focus(); }  
 
 hiddenInput.addEventListener("input",function(){  
-    if(isPaused) return;
+    if(isPaused || !testRunning) return;
     playKeySound();  
     let input=this.value;  
     let spans=document.querySelectorAll("#task span");  
@@ -318,13 +328,13 @@ hiddenInput.addEventListener("input",function(){
         else if(input[i]===currentText[i]){ spans[i].classList.add("correct"); spans[i].classList.remove("wrong"); } 
         else { spans[i].classList.add("wrong"); spans[i].classList.remove("correct"); }  
     }  
-    // Auto finish when sentence matches
     if(input===currentText) finishTest();  
 });  
 
 async function finishTest(){  
     clearInterval(timer);  
     isPaused = true;
+    testRunning = false;
     let timeUsed = (new Date().getTime() - startTime) / 60000;  
     let wpm = Math.round((totalTyped/5)/timeUsed) || 0;  
     let correctChars = document.querySelectorAll(".correct").length;
@@ -332,6 +342,7 @@ async function finishTest(){
 
     document.getElementById("finalScore").innerText = "Speed: " + wpm + " WPM | Accuracy: " + acc + "%";
     document.getElementById("finishOverlay").style.display = "flex";
+    document.getElementById("gameButtons").style.display = "block";
 
     if(currentUser) {
         await fetch('/api/update_stats', {
@@ -340,18 +351,19 @@ async function finishTest(){
             body: JSON.stringify({u: currentUser, wpm: wpm, acc: acc})
         });
     }
-    nextBtn.style.display="inline-block"; restartBtn.style.display="inline-block";  
 }  
 
 function nextLevel() {
     currentLevelIndex++;
-    closeAll();
-    timeLeft = 60; // reset timer for next level
+    timeLeft = 60; 
     loadText();
 }
 
-function nextTest(){ currentLevelIndex++; loadText(); }  
-function restartTest(){ loadText(); }  
+function restartTest() {
+    timeLeft = 60;
+    loadText();
+}
+
 function showTest(){ stopTyping(); closeAll(); document.getElementById("testBox").style.display="block"; }  
 function startTest(t){ timeLeft=t; document.getElementById("testBox").style.display="none"; loadText(); }  
 function startSite(){ welcomeScreen.style.display="none"; loadText(); }  
