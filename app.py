@@ -4,26 +4,18 @@ import os
 
 app = Flask(__name__)
 
-# --- BACKEND DATABASE LOGIC ---
+# --- BACKEND STORAGE (database.json) ---
 DB_FILE = 'database.json'
 
-def load_data():
+def load_db():
     if not os.path.exists(DB_FILE):
-        # Default data structure
-        initial_data = {
-            "users": {"admin": "1234"},
-            "userStats": {"admin": {"attempts": 0, "bestWpm": 0, "accuracy": 0}}
-        }
-        save_data(initial_data)
-        return initial_data
-    with open(DB_FILE, 'r') as f:
-        return json.load(f)
+        data = {"users": {"admin": "1234"}, "userStats": {"admin": {"attempts": 0, "bestWpm": 0, "accuracy": 0, "level": 1}}}
+        save_db(data)
+        return data
+    with open(DB_FILE, 'r') as f: return json.load(f)
 
-def save_data(data):
-    with open(DB_FILE, 'w') as f:
-        json.dump(data, f, indent=4)
-
-# --- ROUTES ---
+def save_db(data):
+    with open(DB_FILE, 'w') as f: json.dump(data, f, indent=4)
 
 @app.route('/')
 def home():
@@ -32,7 +24,7 @@ def home():
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
-    db = load_data()
+    db = load_db()
     u, p = data.get('u'), data.get('p')
     if db['users'].get(u) == p:
         return jsonify({"status": "success", "stats": db['userStats'].get(u, {})})
@@ -41,372 +33,211 @@ def login():
 @app.route('/api/create', methods=['POST'])
 def create():
     data = request.json
-    db = load_data()
+    db = load_db()
     u, p = data.get('u'), data.get('p')
-    if u in db['users']:
-        return jsonify({"status": "exists"}), 400
+    if u in db['users']: return jsonify({"status": "exists"}), 400
     db['users'][u] = p
-    db['userStats'][u] = {"attempts": 0, "bestWpm": 0, "accuracy": 0}
-    save_data(db)
+    db['userStats'][u] = {"attempts": 0, "bestWpm": 0, "accuracy": 0, "level": 1}
+    save_db(db)
     return jsonify({"status": "success"})
 
-@app.route('/api/update_stats', methods=['POST'])
+@app.route('/api/update', methods=['POST'])
 def update_stats():
     data = request.json
-    db = load_data()
+    db = load_db()
     u = data.get('u')
     if u in db['userStats']:
-        db['userStats'][u]['attempts'] += 1
-        if data.get('wpm') > db['userStats'][u]['bestWpm']:
-            db['userStats'][u]['bestWpm'] = data.get('wpm')
-        db['userStats'][u]['accuracy'] = data.get('acc')
-        save_data(db)
-    return jsonify({"status": "success"})
+        s = db['userStats'][u]
+        s['attempts'] += 1
+        if data.get('wpm') > s['bestWpm']: s['bestWpm'] = data.get('wpm')
+        s['accuracy'] = data.get('acc')
+        
+        # Level Logic
+        old_lvl = s.get('level', 1)
+        if s['bestWpm'] > 45: s['level'] = 3
+        elif s['bestWpm'] > 25: s['level'] = 2
+        else: s['level'] = 1
+        
+        save_db(db)
+        return jsonify({"levelUp": s['level'] > old_lvl, "newLevel": s['level']})
+    return jsonify({"status": "error"})
 
-@app.route('/api/admin_data')
-def admin_data():
-    db = load_data()
-    return jsonify(db['userStats'])
+@app.route('/api/admin')
+def get_admin():
+    return jsonify(load_db()['userStats'])
 
-# --- HTML / JS CODE ---
+# --- UI CODE (HTML/CSS/JS) ---
 HTML_CODE = """
-<!DOCTYPE html>  <html>  
-<head>  
-<title>Beginner Typing Speed Test</title>  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&family=Pacifico&display=swap" rel="stylesheet">  <style>  
-body {  
-    margin:0;  
-    font-family:'Roboto Mono', monospace;  
-    background:#1a1a2e;  
-    color:white;  
-    overflow:hidden;  
-}  
-  
-/* 🔥 LEFT MENU */  
-.left-menu{  
-    position:fixed;  
-    top:120px;  
-    left:20px;  
-    display:flex;  
-    flex-direction:column;  
-    gap:10px;  
-    z-index:10000;  
-}  
-.left-menu button{  
-    padding:10px;  
-    border:none;  
-    border-radius:6px;  
-    background:#00c6ff;  
-    color: white;
-    cursor:pointer;  
-    font-weight: bold;
-}  
-  
-/* 🔥 MODALS */  
-.modal{  
-    position:fixed;  
-    top:50%;  
-    left:50%;  
-    transform:translate(-50%,-50%);  
-    background:rgba(10, 10, 30, 0.98);  
-    padding:30px;  
-    border-radius:15px;  
-    display:none;  
-    z-index:99999;  
-    min-width: 400px;
-    border: 2px solid #00c6ff;
-    box-shadow: 0 0 30px rgba(0, 198, 255, 0.3);
-}  
-.modal input{  
-    width:100%;  
-    margin:10px 0;  
-    padding:10px;  
-    border:none;  
-    border-radius:5px;  
-    box-sizing: border-box;
-}  
+<!DOCTYPE html><html><head><title>Pro Typing Level System</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+body { margin:0; font-family:'Roboto Mono', monospace; background:#1a1a2e; color:white; overflow:hidden; }
+.left-menu{ position:fixed; top:120px; left:20px; display:flex; flex-direction:column; gap:10px; z-index:1000; }
+.left-menu button{ padding:10px; border:none; border-radius:6px; background:#00c6ff; color:white; cursor:pointer; font-weight:bold; }
 
-/* 🔥 ADMIN TABLE */
-#statsTable { margin-top: 20px; max-height: 300px; overflow-y: auto; }
-table { width: 100%; border-collapse: collapse; color: white; font-size: 14px; }
-th, td { border: 1px solid #333; padding: 12px; text-align: center; }
-th { background: #0072ff; color: white; }
-tr:nth-child(even) { background: rgba(255,255,255,0.05); }
-  
-.user-circle{  
-    background:#00c6ff;  
-    padding:8px 15px;  
-    border-radius:20px;  
-}  
-  
-#welcomeScreen{  
-    position:fixed;  top:0; left:0; width:100%; height:100%;  
-    background:linear-gradient(135deg,#000428,#004e92);  
-    display:flex; justify-content:center; align-items:center;  
-    flex-direction:column; z-index:100000;  
-}  
-  
-#welcomeText{ font-size:45px; font-family:'Pacifico', cursive; color:#00ffff; text-shadow:0 0 20px #00ffff; }  
-  
-.start-btn{ margin-top:20px; padding:12px 25px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; cursor:pointer; font-size:16px; }  
-  
-.header { width:100%; display:flex; justify-content:space-between; padding:20px 50px; background:rgba(0,0,0,0.3); position:fixed; top:0; font-family:'Pacifico', cursive; box-sizing: border-box; }  
-.header h2{color:#00ffff; margin:0;}  
-  
-.center { position:absolute; top:55%; left:50%; transform:translate(-50%,-50%); width:80%; text-align:center; }  
-#task { font-size:32px; line-height:2; color:#aaa; }  
-.correct {color:#00ff88;}  
-.wrong {color:#ff4d4d;}  
-#hiddenInput { opacity:0; position:absolute; }  
-#timer { font-size:28px; color:#00ffcc; text-shadow:0 0 10px #00ffff; margin-bottom:15px; }  
-.btn { margin:15px; padding:12px 30px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; font-size:16px; cursor:pointer; }  
-  
-.test-box { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); display:none; text-align:center; background:rgba(255,255,255,0.1); padding:25px; border-radius:15px; }  
-</style>  </head>  <body onclick="focusInput(); unlockAudio();">  
+/* FULL SCREEN PROGRESS MESSAGE */
+#levelOverlay {
+    position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95);
+    display:none; flex-direction:column; justify-content:center; align-items:center; z-index:20000; text-align:center;
+}
+.lvl-box { padding:40px; border-radius:20px; border:3px solid #00ffff; box-shadow:0 0 30px #00ffff; }
 
-<div class="left-menu">  
-<button onclick="showTest()">Test</button>  
-<button onclick="openLogin()">Login</button>  
-<button onclick="openCreate()">Create Account</button>  
-<button id="adminBtn" style="display:none; background:#ff4d4d;" onclick="openAdmin()">ADMIN PANEL</button>
-</div>  
+.modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#0a0a1e; padding:30px; border-radius:15px; display:none; z-index:9999; border:2px solid #00c6ff; min-width:400px; }
+input{ width:100%; margin:10px 0; padding:10px; border-radius:5px; border:none; box-sizing:border-box; }
+.header { width:100%; display:flex; justify-content:space-between; padding:20px 50px; background:rgba(0,0,0,0.3); position:fixed; top:0; box-sizing:border-box; }
+.center { position:absolute; top:55%; left:50%; transform:translate(-50%,-50%); width:80%; text-align:center; }
+#task { font-size:30px; color:#aaa; line-height:1.6; }
+.correct { color:#00ff88; }
+.wrong { color:#ff4d4d; text-decoration:underline; }
+#hiddenInput { opacity:0; position:absolute; }
+#timer { font-size:28px; color:#00ffff; margin-bottom:10px; }
+.btn { padding:12px 25px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; cursor:pointer; font-size:16px; margin:5px; }
+table { width: 100%; border-collapse: collapse; color: white; }
+th, td { border: 1px solid #333; padding: 10px; text-align: center; }
+#levelTag { background:#ff4d4d; padding:5px 12px; border-radius:12px; font-size:14px; margin-left:10px; }
+</style></head>
+<body onclick="document.getElementById('hiddenInput').focus(); unlockAudio();">
 
-<div class="modal" id="loginBox" onclick="event.stopPropagation()">  
-<h3>Login</h3>  
-<input type="text" id="username" placeholder="Username">  
-<input type="password" id="password" placeholder="Password">  
-<button class="btn" onclick="login()">Login</button>  
-<button class="btn" style="background:gray" onclick="closeAll()">Close</button>
-</div>  
-
-<div class="modal" id="createBox" onclick="event.stopPropagation()">  
-<h3>Create Account</h3>  
-<input type="text" id="newUsername" placeholder="Username">  
-<input type="password" id="newPassword" placeholder="Password">  
-<button class="btn" onclick="createAccount()">Create</button>  
-<button class="btn" style="background:gray" onclick="closeAll()">Close</button>
-</div>  
-
-<div class="modal" id="adminPanel" onclick="event.stopPropagation()">
-    <h2 style="color:#00ffff">Admin Leaderboard</h2>
-    <div id="statsTable"></div>
-    <br>
-    <button class="btn" onclick="closeAll()">Close Dashboard</button>
+<div id="levelOverlay">
+    <div class="lvl-box">
+        <h1 style="font-family:'Pacifico'; color:#00ffff; font-size:50px;">LEVEL UP! 🚀</h1>
+        <h2 id="lvlMsg">Training Progress: Level 2 reached</h2>
+        <button class="btn" onclick="document.getElementById('levelOverlay').style.display='none'; nextTest();">Continue Training</button>
+    </div>
 </div>
 
-<div id="welcomeScreen">  
-    <div id="welcomeText">Welcome 🚀</div>  
-    <button class="start-btn" onclick="startSite()">Start</button>  
-</div>  
+<div class="left-menu">
+    <button onclick="showTest()">Test</button>
+    <button onclick="openLogin()">Login</button>
+    <button onclick="openCreate()">Create Account</button>
+    <button onclick="openAdmin()" style="background:#ff4d4d;">LEADERBOARD</button>
+</div>
 
-<div class="header">  
-<h2>Typing Speed Test</h2>  
-<div id="userDisplay"></div>  
-</div>  
+<div class="header">
+    <h2 style="font-family:'Pacifico'; color:#00ffff; margin:0;">Typing Master</h2>
+    <div id="userDisplay"></div>
+</div>
 
-<div class="center">  
-<div id="timer"></div>  
-<div id="task"></div>  
-<input id="hiddenInput">  
-<div id="result"></div>  <div>  
-<button class="btn" onclick="nextTest()" id="nextBtn" style="display:none;">Next</button>  
-<button class="btn" onclick="restartTest()" id="restartBtn" style="display:none;">Restart</button>  
-</div>  
-</div>  
+<div class="center">
+    <div id="timer">⏱ 60 sec</div>
+    <div id="task">Please login to track your progress level.</div>
+    <input id="hiddenInput" autocomplete="off">
+    <div id="result" style="font-size:22px; margin:20px;"></div>
+    <div>
+        <button class="btn" id="nextBtn" style="display:none;" onclick="nextTest()">Next</button>
+        <button class="btn" id="restartBtn" style="display:none;" onclick="nextTest()">Restart</button>
+    </div>
+</div>
 
-<div class="test-box" id="testBox">  
-<h2>Select Time</h2>  
-<button onclick="startTest(60)">1 Min</button>  
-<button onclick="startTest(180)">3 Min</button>  
-<button onclick="startTest(300)">5 Min</button>  
-<button onclick="startTest(600)">10 Min</button>  
-</div>  
+<div class="modal" id="loginBox">
+    <h3>User Login</h3>
+    <input type="text" id="u" placeholder="Username">
+    <input type="password" id="p" placeholder="Password">
+    <button class="btn" onclick="login()">Login</button>
+    <button class="btn" style="background:gray" onclick="closeAll()">Close</button>
+</div>
 
-<script>  
-  
-let currentUser = null;  
-  
-function closeAll(){  
-    loginBox.style.display="none";  
-    createBox.style.display="none";  
-    testBox.style.display="none";  
-    adminPanel.style.display="none";
-}  
-  
-function openLogin(){  
-    stopTyping();  
-    closeAll();  
-    loginBox.style.display="block";  
-    username.focus();  
-}  
+<div class="modal" id="adminPanel">
+    <h2 style="color:#00ffff">Global Rankings</h2>
+    <div id="statsTable" style="max-height:300px; overflow-y:auto;"></div>
+    <button class="btn" onclick="closeAll()">Close</button>
+</div>
 
-async function login(){  
-    let u = document.getElementById("username").value;  
-    let p = document.getElementById("password").value;  
-  
-    const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({u, p})
+<div class="modal" id="testBox">
+    <h3>Select Time</h3>
+    <button class="btn" onclick="startTest(60)">1 Min</button>
+    <button class="btn" onclick="startTest(180)">3 Min</button>
+</div>
+
+<script>
+let currentUser = null, currentLevel = 1, timer, timeLeft=60, startTime, totalTyped=0;
+const levels = {
+    1: ["The sun is very bright.", "I like to type fast.", "Cats are cute animals."],
+    2: ["Technology is changing the world very rapidly every day.", "Consistent practice is the key to mastering any skill."],
+    3: ["Sophisticated artificial intelligence requires complex algorithms and data structures to function properly."]
+};
+
+function closeAll() { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); }
+function openLogin() { closeAll(); document.getElementById('loginBox').style.display='block'; }
+function showTest() { closeAll(); document.getElementById('testBox').style.display='block'; }
+
+async function login(){
+    let u = document.getElementById('u').value, p = document.getElementById('p').value;
+    const res = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({u,p})});
+    if(res.ok){
+        const data = await res.json();
+        currentUser = u; currentLevel = data.stats.level || 1;
+        updateHeader(); closeAll(); nextTest();
+    } else alert("Invalid Credential");
+}
+
+async function openCreate(){
+    let u = prompt("Username:"), p = prompt("Password:");
+    if(u&&p) await fetch('/api/create', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({u,p})});
+}
+
+function updateHeader(){
+    document.getElementById('userDisplay').innerHTML = `<span style="background:#00c6ff; padding:5px 10px; border-radius:10px;">👤 ${currentUser}</span> <span id="levelTag">Lvl ${currentLevel}</span>`;
+}
+
+function nextTest(){
+    document.getElementById('result').innerText = "";
+    document.getElementById('nextBtn').style.display = "none";
+    let pool = levels[currentLevel] || levels[1];
+    currentText = pool[Math.floor(Math.random()*pool.length)];
+    let html = ""; for(let c of currentText) html += `<span>${c}</span>`;
+    document.getElementById('task').innerHTML = html;
+    document.getElementById('hiddenInput').value = "";
+    startTime = new Date().getTime();
+    clearInterval(timer); timer = setInterval(updateTimer, 1000);
+}
+
+function updateTimer(){
+    timeLeft--; document.getElementById('timer').innerText = `⏱ ${timeLeft} sec`;
+    if(timeLeft<=0) finishTest();
+}
+
+document.getElementById('hiddenInput').addEventListener('input', function(){
+    let val = this.value, spans = document.querySelectorAll('#task span');
+    totalTyped = val.length;
+    spans.forEach((s, i) => {
+        if(!val[i]) s.className = "";
+        else if(val[i]===currentText[i]) s.className = "correct";
+        else s.className = "wrong";
     });
+    if(val === currentText) finishTest();
+});
 
-    if(res.ok){  
-        currentUser = u;  
-        document.getElementById("userDisplay").innerHTML = "<span class='user-circle'>👤 "+u+"</span> <button onclick='logout()'>Logout</button>";  
-        if(u === "admin") document.getElementById("adminBtn").style.display = "block";
-        alert("Login Successful!");  
-        closeAll();  
-    } else{  
-        alert("Wrong Username or Password");  
-    }  
-}  
-  
-function openCreate(){  
-    stopTyping();  
-    closeAll();  
-    createBox.style.display="block";  
-    newUsername.focus();  
-}  
-  
-async function createAccount(){  
-    let u = document.getElementById("newUsername").value;  
-    let p = document.getElementById("newPassword").value;  
-  
-    if(u && p){  
-        const res = await fetch('/api/create', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({u, p})
-        });
-        if(res.ok){
-            alert("Account Created for " + u);  
-            closeAll();  
-        } else {
-            alert("User already exists or error!");
+async function finishTest(){
+    clearInterval(timer);
+    let wpm = Math.round((totalTyped/5)/((new Date().getTime()-startTime)/60000)) || 0;
+    let acc = Math.round((document.querySelectorAll('.correct').length/totalTyped)*100) || 0;
+    document.getElementById('result').innerText = `WPM: ${wpm} | Accuracy: ${acc}%`;
+    document.getElementById('nextBtn').style.display = "inline-block";
+    
+    if(currentUser){
+        const res = await fetch('/api/update', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({u:currentUser, wpm, acc})});
+        const data = await res.json();
+        if(data.levelUp){
+            currentLevel = data.newLevel; updateHeader();
+            document.getElementById('lvlMsg').innerText = `Progress Saved: You reached Level ${currentLevel}`;
+            document.getElementById('levelOverlay').style.display = 'flex';
         }
-    } else{  
-        alert("Enter Username & Password");  
-    }  
-}  
-  
-function logout(){  
-    currentUser = null;  
-    document.getElementById("userDisplay").innerHTML = "";  
-    document.getElementById("adminBtn").style.display = "none";
-}  
+    }
+}
 
 async function openAdmin(){
-    stopTyping();
-    closeAll();
-    document.getElementById("adminPanel").style.display = "block";
-    
-    const res = await fetch('/api/admin_data');
-    const userStats = await res.json();
-
-    let sortedUsers = Object.keys(userStats).sort((a,b) => userStats[b].bestWpm - userStats[a].bestWpm);
-    
-    let html = "<table><tr><th>Rank</th><th>User</th><th>Tests</th><th>Max WPM</th><th>Accuracy</th></tr>";
-    sortedUsers.forEach((name, index) => {
-        let s = userStats[name];
-        html += `<tr>
-            <td>#${index + 1}</td>
-            <td>${name}</td>
-            <td>${s.attempts}</td>
-            <td>${s.bestWpm}</td>
-            <td>${s.accuracy}%</td>
-        </tr>`;
-    });
-    html += "</table>";
-    document.getElementById("statsTable").innerHTML = html;
+    closeAll(); document.getElementById('adminPanel').style.display='block';
+    const res = await fetch('/api/admin');
+    const data = await res.json();
+    let html = "<table><tr><th>User</th><th>Lvl</th><th>WPM</th></tr>";
+    for(let u in data) html += `<tr><td>${u}</td><td>${data[u].level}</td><td>${data[u].bestWpm}</td></tr>`;
+    document.getElementById('statsTable').innerHTML = html + "</table>";
 }
-  
-function stopTyping(){  
-    clearInterval(timer);  
-    document.getElementById("hiddenInput").blur();  
-}  
-  
-/* AUDIO */  
-let audioCtx;  
-function unlockAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }  
-function playKeySound(){  
-    if(!audioCtx) return;  
-    let osc = audioCtx.createOscillator();  
-    let gain = audioCtx.createGain();  
-    osc.type = "square";  
-    osc.frequency.value = 200 + Math.random()*100;  
-    gain.gain.value = 0.05;  
-    osc.connect(gain); gain.connect(audioCtx.destination);  
-    osc.start(); osc.stop(audioCtx.currentTime + 0.05);  
-}  
-  
-/* GAME LOGIC */  
-let paragraphs=["Technology is evolving rapidly in today's world and typing is an essential skill for everyone."];  
-let currentText="",timer,timeLeft=60;  
-let startTime,totalTyped=0;  
-  
-function loadText(){  
-    result.innerHTML="";  
-    nextBtn.style.display="none";  
-    restartBtn.style.display="none";  
-    currentText=paragraphs[0];  
-    let html="";  
-    for(let i=0;i<currentText.length;i++){ html+="<span>"+currentText[i]+"</span>"; }  
-    task.innerHTML=html;  
-    hiddenInput.value="";  
-    startTime=new Date().getTime();  
-    clearInterval(timer);  
-    timer=setInterval(updateTimer,1000);  
-}  
-  
-function updateTimer(){  
-    timeLeft--;  
-    document.getElementById("timer").innerText="⏱ "+timeLeft+" sec";  
-    if(timeLeft<=0) finishTest();  
-}  
-  
-function focusInput(){ document.getElementById("hiddenInput").focus(); }  
-  
-hiddenInput.addEventListener("input",function(){  
-    playKeySound();  
-    let input=this.value;  
-    let spans=document.querySelectorAll("#task span");  
-    totalTyped=input.length;  
-    for(let i=0;i<spans.length;i++){  
-        if(input[i]==null) spans[i].classList.remove("correct","wrong");  
-        else if(input[i]===currentText[i]){ spans[i].classList.add("correct"); spans[i].classList.remove("wrong"); } 
-        else { spans[i].classList.add("wrong"); spans[i].classList.remove("correct"); }  
-    }  
-    if(input===currentText) finishTest();  
-});  
-  
-async function finishTest(){  
-    clearInterval(timer);  
-    let time=(new Date().getTime()-startTime)/60000;  
-    let wpm=Math.round((totalTyped/5)/time) || 0;  
-    let correctChars = document.querySelectorAll(".correct").length;
-    let acc = totalTyped > 0 ? Math.round((correctChars / totalTyped) * 100) : 0;
-  
-    result.innerHTML="🎉 WPM: "+wpm + " | Accuracy: " + acc + "%";  
-  
-    if(currentUser) {
-        await fetch('/api/update_stats', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({u: currentUser, wpm: wpm, acc: acc})
-        });
-    }
 
-    nextBtn.style.display="inline-block";  
-    restartBtn.style.display="inline-block";  
-}  
-  
-function nextTest(){ timeLeft=60; loadText(); }  
-function restartTest(){ timeLeft=60; loadText(); }  
-function showTest(){ stopTyping(); closeAll(); testBox.style.display="block"; }  
-function startTest(t){ timeLeft=t; testBox.style.display="none"; loadText(); }  
-function startSite(){ welcomeScreen.style.display="none"; loadText(); }  
-  
-</script>  </body>  
-</html>  
+function startTest(t) { timeLeft = t; closeAll(); nextTest(); }
+let audioCtx; function unlockAudio(){ if(!audioCtx) audioCtx = new AudioContext(); }
+</script></body></html>
 """
 
 if __name__ == "__main__":
