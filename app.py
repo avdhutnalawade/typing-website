@@ -4,7 +4,7 @@ import os
 
 app = Flask(__name__)
 
-# --- BACKEND DATABASE LOGIC ---
+# --- BACKEND DATABASE LOGIC (ORIGINAL) ---
 DB_FILE = 'database.json'
 
 def load_data():
@@ -22,23 +22,22 @@ def save_data(data):
     with open(DB_FILE, 'w') as f:
         json.dump(data, f, indent=4)
 
-# --- ROUTES ---
-
+# --- ROUTES (ORIGINAL) ---
 @app.route('/')
 def home():
     return render_template_string(HTML_CODE)
 
 @app.route('/api/login', methods=['POST'])
-def login():
+def login_route():
     data = request.json
     db = load_data()
     u, p = data.get('u'), data.get('p')
     if db['users'].get(u) == p:
-        return jsonify({"status": "success", "stats": db['userStats'].get(u, {})})
+        return jsonify({"status": "success", "stats": db['userStats'].get(u, {})} )
     return jsonify({"status": "fail"}), 401
 
 @app.route('/api/create', methods=['POST'])
-def create():
+def create_route():
     data = request.json
     db = load_data()
     u, p = data.get('u'), data.get('p')
@@ -77,20 +76,20 @@ HTML_CODE = """
 :root { --bg: #1a1a2e; --text: white; --primary: #00c6ff; }
 body { margin:0; font-family:'Roboto Mono', monospace; background: var(--bg); color: var(--text); overflow:hidden; transition: 0.3s; }  
 
-/* Themes */
+/* Themes Support */
 body.light-theme { --bg: #f0f2f5; --text: #1a1a2e; --primary: #0072ff; }
 body.neon-theme { --bg: #000; --text: #0f0; --primary: #f0f; }
 body.matrix-theme { --bg: #000; --text: #00ff41; --primary: #003b00; }
 
 .left-menu{ position:fixed; top:120px; left:20px; display:flex; flex-direction:column; gap:10px; z-index:10000; }  
-.left-menu button{ padding:10px; border:none; border-radius:6px; background: var(--primary); color: white; cursor:pointer; font-weight: bold; width: 140px; text-align: left; }  
+.left-menu button{ padding:10px; border:none; border-radius:6px; background: var(--primary); color: white; cursor:pointer; font-weight: bold; width: 150px; text-align: left; }  
 
-.modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(10, 10, 30, 0.98); padding:30px; border-radius:15px; display:none; z-index:99999; min-width: 400px; max-width: 650px; border: 2px solid var(--primary); box-shadow: 0 0 30px rgba(0, 198, 255, 0.3); max-height: 85vh; overflow-y: auto; }  
+.modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(10, 10, 30, 0.98); padding:30px; border-radius:15px; display:none; z-index:99999; min-width: 400px; max-width: 650px; border: 2px solid var(--primary); box-shadow: 0 0 30px rgba(0, 198, 255, 0.3); max-height: 85vh; overflow-y: auto; color: white; }  
 .modal input, .modal select { width:100%; margin:10px 0; padding:10px; border:none; border-radius:5px; box-sizing: border-box; background: #222; color: white; }  
 
-/* Learn Steps CSS */
-.step-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #28a745; }
-.video-frame { width: 100%; height: 250px; border-radius: 8px; margin-top: 10px; background: #000; }
+/* Learn Step Styling */
+.step-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #28a745; text-align: left; }
+.video-frame { width: 100%; height: 250px; border-radius: 8px; margin-top: 10px; background: #000; border: none; }
 
 #statsTable { margin-top: 20px; max-height: 300px; overflow-y: auto; }
 table { width: 100%; border-collapse: collapse; color: white; font-size: 14px; }
@@ -127,36 +126,32 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 </div>
 
 <div class="left-menu">  
-<button onclick="showTest()">Test ⏱</button>  
-<button onclick="openLogin()">Login 👤</button>  
-<button onclick="openCreate()">Create Account ✨</button>  
-<button onclick="openAdmin()" style="background:#ff4d4d;">ADMIN PANEL 📊</button>
+<button onclick="showTest()">Test</button>  
+<button onclick="openLogin()">Login</button>  
+<button onclick="openCreate()">Create Account</button>  
+<button onclick="openAdmin()" style="background:#ff4d4d;">ADMIN PANEL</button>
 <button onclick="openSettings()" style="background:#ffa500;">SETTINGS ⚙️</button>
 <button onclick="openLearn()" style="background:#28a745;">LEARN 🎓</button>
 </div>  
 
 <div class="modal" id="learnBox" onclick="event.stopPropagation()">
-    <h2 style="color: #28a745">Typing Mastery (Step-by-Step)</h2>
-    
+    <h2 style="color: #28a745">Learn Typing (Step-by-Step)</h2>
     <div class="step-item">
-        <h3>Step 1: Finger Positioning (Beginner)</h3>
-        <p>Position your fingers on the 'Home Row'. Use 3D animation to understand the base layout.</p>
+        <h3>Step 1: Finger Positioning (Home Row)</h3>
+        <p>A, S, D, F ani J, K, L, ; var botanchi sthiti shika.</p>
         <iframe class="video-frame" src="https://www.youtube.com/embed/1ArVtCQqQRE" frameborder="0" allowfullscreen></iframe>
     </div>
-
     <div class="step-item">
-        <h3>Step 2: Key Mapping (Intermediate)</h3>
-        <p>Learn which finger is responsible for which key without looking down.</p>
-        <iframe class="video-frame" src="https://www.youtube.com/embed/6_f7SreQ59U" frameborder="0" allowfullscreen></iframe>
+        <h3>Step 2: Middle Finger & Shift Key</h3>
+        <p>Intermediate level typing reaches ani shift keys cha wapar.</p>
+        <iframe class="video-frame" src="https://www.youtube.com/embed/EMUH9BPmqcY" frameborder="0" allowfullscreen></iframe>
     </div>
-
     <div class="step-item">
-        <h3>Step 3: 100+ WPM Secrets (Advanced)</h3>
-        <p>Advanced 3D techniques for maximum speed and zero errors.</p>
-        <iframe class="video-frame" src="https://www.youtube.com/embed/Xm_66o70o0M" frameborder="0" allowfullscreen></iframe>
+        <h3>Step 3: Fast Typing Course</h3>
+        <p>Advanced tips typing speed 3x vadhvnyasathi.</p>
+        <iframe class="video-frame" src="https://www.youtube.com/embed/tU_AXrvQjpo" frameborder="0" allowfullscreen></iframe>
     </div>
-
-    <button class="btn" onclick="closeAll()">Start Practice</button>
+    <button class="btn" onclick="closeAll()">Close</button>
 </div>
 
 <div class="modal" id="settingsBox" onclick="event.stopPropagation()">
@@ -170,8 +165,8 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
     </select>
     <label>Audio:</label>
     <select id="audioSelect">
-        <option value="classic">Classic Square</option>
-        <option value="mechanical">Mechanical Keyboard</option>
+        <option value="classic">Classic</option>
+        <option value="mechanical">Mechanical</option>
         <option value="silent">No Sound</option>
     </select>
     <br><br>
@@ -189,7 +184,10 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 </div>  
 
 <div class="modal" id="adminPanel" onclick="event.stopPropagation()">
-    <h2 style="color:#00ffff">Admin Leaderboard</h2> <div id="statsTable"></div> <br> <button class="btn" onclick="closeAll()">Close</button>
+    <h2 style="color:#00ffff">Admin Leaderboard</h2>
+    <div id="statsTable"></div>
+    <br>
+    <button class="btn" onclick="closeAll()">Close Dashboard</button>
 </div>
 
 <div id="welcomeScreen">  
@@ -215,7 +213,7 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 
 <div class="test-box" id="testBox" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(255,255,255,0.1); padding:25px; border-radius:15px; text-align:center; z-index: 50000;">  
 <h2>Select Time</h2>  
-<button class="btn" onclick="startTest(60)">1 Min</button>  <button class="btn" onclick="startTest(180)">3 Min</button> <button class="btn" onclick="startTest(300)">5 Min</button>  
+<button onclick="startTest(60)">1 Min</button> <button onclick="startTest(180)">3 Min</button> <button onclick="startTest(300)">5 Min</button> <button onclick="startTest(600)">10 Min</button>  
 </div>  
 
 <script>  
@@ -229,21 +227,22 @@ const typingLevels = [
 ];
 
 function closeAll(){  
-    ['loginBox', 'createBox', 'settingsBox', 'adminPanel', 'learnBox', 'testBox', 'finishOverlay'].forEach(id => {
-        let el = document.getElementById(id); if(el) el.style.display="none";
-    });
+    loginBox.style.display="none"; createBox.style.display="none"; settingsBox.style.display="none";
+    if(document.getElementById("testBox")) document.getElementById("testBox").style.display="none";  
+    adminPanel.style.display="none"; finishOverlay.style.display="none"; learnBox.style.display="none";
 }  
 
-function openLearn() { stopTyping(); closeAll(); document.getElementById('learnBox').style.display="block"; }
+function openLearn() { stopTyping(); closeAll(); learnBox.style.display="block"; }
 function openSettings() { stopTyping(); closeAll(); settingsBox.style.display="block"; }
 function changeTheme() { document.body.className = document.getElementById("themeSelect").value; }
 
+// --- ORIGINAL LOGIC (UNCHANGED) ---
 function openLogin(){ stopTyping(); closeAll(); loginBox.style.display="block"; username.focus(); }  
 async function login(){  
     let u = username.value, p = password.value;  
     const res = await fetch('/api/login', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({u, p})});
     if(res.ok){ currentUser = u; userDisplay.innerHTML = "<span class='user-circle'>👤 "+u+"</span>"; closeAll(); } 
-    else alert("Login Failed");  
+    else alert("Wrong Credentials");  
 }  
 function openCreate(){ stopTyping(); closeAll(); createBox.style.display="block"; }  
 async function createAccount(){  
@@ -251,11 +250,16 @@ async function createAccount(){
     const res = await fetch('/api/create', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({u, p})});
     if(res.ok) alert("Created!"); closeAll();
 }
+
 async function openAdmin(){
-    stopTyping(); closeAll(); adminPanel.style.display="block";
-    const res = await fetch('/api/admin_data'); const data = await res.json();
-    let html = "<table><tr><th>User</th><th>Max WPM</th></tr>";
-    for(let u in data) { html += `<tr><td>${u}</td><td>${data[u].bestWpm}</td></tr>`; }
+    stopTyping(); closeAll(); adminPanel.style.display = "block";
+    const res = await fetch('/api/admin_data'); const userStats = await res.json();
+    let sortedUsers = Object.keys(userStats).sort((a,b) => userStats[b].bestWpm - userStats[a].bestWpm);
+    let html = "<table><tr><th>Rank</th><th>User</th><th>Tests</th><th>Max WPM</th><th>Accuracy</th></tr>";
+    sortedUsers.forEach((name, index) => {
+        let s = userStats[name];
+        html += `<tr><td>#${index + 1}</td><td>${name}</td><td>${s.attempts}</td><td>${s.bestWpm}</td><td>${s.accuracy}%</td></tr>`;
+    });
     statsTable.innerHTML = html + "</table>";
 }
 
@@ -268,7 +272,7 @@ window.addEventListener("keydown", (e) => {
 
 function loadText(){  
     closeAll(); currentText = typingLevels[currentLevelIndex % typingLevels.length]; 
-    let html=""; for(let char of currentText) html += `<span>${char}</span>`;
+    let html=""; for(let i=0; i<currentText.length; i++) html += `<span>${currentText[i]}</span>`;
     task.innerHTML = html; hiddenInput.value = ""; startTime = new Date().getTime();  
     isPaused = false; testRunning = true; clearInterval(timer); timer = setInterval(updateTimer, 1000);  
 }  
@@ -278,7 +282,10 @@ function updateTimer(){ if(!isPaused){ timeLeft--; document.getElementById("time
 hiddenInput.addEventListener("input", function() {  
     if(isPaused || !testRunning) return;
     playKeySound(); let input=this.value, spans=document.querySelectorAll("#task span"); totalTyped=input.length;  
-    spans.forEach((s, i) => { if(input[i]==null) s.className=""; else s.className=(input[i]===currentText[i])?"correct":"wrong"; });
+    for(let i=0; i<spans.length; i++) {
+        if(input[i]==null) spans[i].className="";
+        else spans[i].className=(input[i]===currentText[i])?"correct":"wrong";
+    }
     if(input===currentText) finishTest();  
 });  
 
@@ -292,7 +299,7 @@ async function finishTest(){
 
 function nextLevel() { currentLevelIndex++; timeLeft=60; loadText(); }
 function restartTest() { timeLeft=60; loadText(); }
-function showTest(){ stopTyping(); closeAll(); testBox.style.display="block"; }  
+function showTest(){ stopTyping(); closeAll(); document.getElementById("testBox").style.display="block"; }  
 function startTest(t){ timeLeft=t; loadText(); }  
 function startSite(){ welcomeScreen.style.display="none"; loadText(); }  
 function focusInput(){ if(testRunning) hiddenInput.focus(); }
@@ -300,9 +307,8 @@ function unlockAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext || win
 function playKeySound(){ 
     let type = audioSelect.value; if(!audioCtx || type === 'silent') return;
     let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
-    osc.type = type === 'mechanical' ? 'sawtooth' : 'square';
-    osc.frequency.value = 180 + Math.random()*60;
-    gain.gain.value = 0.03; osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.frequency.value = 200 + Math.random()*100; gain.gain.value = 0.05;
+    osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(); osc.stop(audioCtx.currentTime + 0.05);
 }
 </script>  
