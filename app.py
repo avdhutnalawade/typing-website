@@ -70,26 +70,26 @@ def admin_data():
 HTML_CODE = """
 <!DOCTYPE html>  <html>  
 <head>  
-<title>Pro Typing Speed Test</title>  
+<title>Typing Speed Test Pro</title>  
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&family=Pacifico&display=swap" rel="stylesheet">  
 <style>  
 :root { --bg: #1a1a2e; --text: white; --primary: #00c6ff; --accent: #00ff88; }
 body { margin:0; font-family:'Roboto Mono', monospace; background: var(--bg); color: var(--text); overflow:hidden; transition: 0.3s; }  
 
-/* Themes CSS */
-body.light-theme { --bg: #f0f2f5; --text: #1a1a2e; --primary: #0072ff; }
+/* Themes */
+body.light-theme { --bg: #ffffff; --text: #1a1a2e; --primary: #0072ff; }
 body.neon-theme { --bg: #000; --text: #0f0; --primary: #f0f; --accent: #0ff; }
 body.matrix-theme { --bg: #000; --text: #00ff41; --primary: #003b00; }
 
 .left-menu{ position:fixed; top:120px; left:20px; display:flex; flex-direction:column; gap:10px; z-index:10000; }  
 .left-menu button{ padding:10px; border:none; border-radius:6px; background: var(--primary); color: white; cursor:pointer; font-weight: bold; }  
 
-.modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(10, 10, 30, 0.98); padding:30px; border-radius:15px; display:none; z-index:99999; min-width: 450px; border: 2px solid var(--primary); box-shadow: 0 0 30px rgba(0, 198, 255, 0.3); color: white; }  
-.modal select, .modal input { width:100%; margin:10px 0; padding:10px; border-radius:5px; border:none; }
+.modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(10, 10, 30, 0.98); padding:30px; border-radius:15px; display:none; z-index:99999; min-width: 400px; border: 2px solid var(--primary); box-shadow: 0 0 30px rgba(0, 198, 255, 0.3); }  
+.modal input, .modal select { width:100%; margin:10px 0; padding:10px; border:none; border-radius:5px; box-sizing: border-box; }  
 
-#statsTable { margin-top: 20px; max-height: 250px; overflow-y: auto; background: rgba(255,255,255,0.05); border-radius: 10px; }
-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-th, td { border: 1px solid #444; padding: 12px; text-align: center; }
+#statsTable { margin-top: 20px; max-height: 300px; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; color: white; font-size: 14px; }
+th, td { border: 1px solid #333; padding: 12px; text-align: center; }
 th { background: var(--primary); color: white; }
 
 #welcomeScreen{ position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg,#000428,#004e92); display:flex; justify-content:center; align-items:center; flex-direction:column; z-index:100000; }  
@@ -98,14 +98,14 @@ th { background: var(--primary); color: white; }
 
 .header { width:100%; display:flex; justify-content:space-between; padding:20px 50px; background:rgba(0,0,0,0.3); position:fixed; top:0; font-family:'Pacifico', cursive; box-sizing: border-box; }  
 .center { position:absolute; top:55%; left:50%; transform:translate(-50%,-50%); width:80%; text-align:center; }  
-#task { font-size:32px; line-height:2; color:#888; }  
+#task { font-size:32px; line-height:2; color:#aaa; }  
 .correct {color: var(--accent);}  
 .wrong {color:#ff4d4d;}  
 #hiddenInput { opacity:0; position:absolute; }  
 #timer { font-size:28px; color: var(--primary); text-shadow:0 0 10px var(--primary); margin-bottom:15px; }  
 .btn { margin:10px; padding:12px 30px; border:none; border-radius:10px; background: var(--primary); color:white; font-size:16px; cursor:pointer; }  
 
-#finishOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 200000; }
+#finishOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 200000; }
 #finishOverlay h1 { font-family: 'Pacifico', cursive; color: var(--primary); font-size: 60px; }
 </style>  </head>  <body onclick="focusInput(); unlockAudio();">  
 
@@ -123,32 +123,26 @@ th { background: var(--primary); color: white; }
 <button onclick="openLogin()">Login</button>  
 <button onclick="openCreate()">Create Account</button>  
 <button onclick="openAdmin()" style="background:#ff4d4d;">ADMIN PANEL</button>
+<button onclick="openSettings()" style="background:#ffa500;">SETTINGS ⚙️</button>
 </div>  
 
-<div class="modal" id="adminPanel" onclick="event.stopPropagation()">
-    <h2 style="color:var(--primary)">Admin Settings & Stats</h2>
-    
-    <div style="background:rgba(255,255,255,0.1); padding:15px; border-radius:10px; margin-bottom:15px;">
-        <label>Change Theme:</label>
-        <select id="themeSelect" onchange="changeTheme()">
-            <option value="default">Midnight Dark (Default)</option>
-            <option value="light-theme">Arctic White</option>
-            <option value="neon-theme">Neon Party</option>
-            <option value="matrix-theme">The Matrix</option>
-        </select>
-
-        <label>Typing Sound:</label>
-        <select id="audioSelect">
-            <option value="classic">Classic Beep</option>
-            <option value="mechanical">Mechanical Keyboard</option>
-            <option value="wood">Wooden Click</option>
-            <option value="none">Silent</option>
-        </select>
-    </div>
-
-    <div id="statsTable"></div>
-    <br>
-    <button class="btn" onclick="closeAll()">Close Dashboard</button>
+<div class="modal" id="settingsBox" onclick="event.stopPropagation()">
+    <h2 style="color:var(--primary)">Settings</h2>
+    <label>Theme:</label>
+    <select id="themeSelect" onchange="changeTheme()">
+        <option value="default">Midnight Dark</option>
+        <option value="light-theme">Arctic White</option>
+        <option value="neon-theme">Neon Glow</option>
+        <option value="matrix-theme">The Matrix</option>
+    </select>
+    <label>Sound:</label>
+    <select id="audioSelect">
+        <option value="classic">Classic Click</option>
+        <option value="mechanical">Mechanical</option>
+        <option value="silent">No Sound</option>
+    </select>
+    <br><br>
+    <button class="btn" onclick="closeAll()">Save & Close</button>
 </div>
 
 <div class="modal" id="loginBox" onclick="event.stopPropagation()">  
@@ -167,6 +161,13 @@ th { background: var(--primary); color: white; }
 <button class="btn" style="background:gray" onclick="closeAll()">Close</button>
 </div>  
 
+<div class="modal" id="adminPanel" onclick="event.stopPropagation()">
+    <h2 style="color:var(--primary)">Admin Leaderboard</h2>
+    <div id="statsTable"></div>
+    <br>
+    <button class="btn" onclick="closeAll()">Close Dashboard</button>
+</div>
+
 <div id="welcomeScreen">  
     <div id="welcomeText">Welcome 🚀</div>  
     <button class="start-btn" onclick="startSite()">Start</button>  
@@ -182,13 +183,9 @@ th { background: var(--primary); color: white; }
 <div id="task"></div>  
 <input id="hiddenInput">  
 <div id="result"></div>  
-<div id="gameButtons" style="display:none;">  
-<button class="btn" onclick="nextLevel()">Next Level</button>  
-<button class="btn" onclick="restartTest()" style="background:gray;">Restart</button>  
-</div>  
 </div>  
 
-<div class="test-box" id="testBox" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(255,255,255,0.1); padding:25px; border-radius:15px; text-align:center; z-index: 50000;">  
+<div class="test-box" id="testBox" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(255,255,255,0.1); padding:25px; border-radius:15px; text-align:center;">  
 <h2>Select Time</h2>  
 <button class="btn" onclick="startTest(60)">1 Min</button>  
 <button class="btn" onclick="startTest(180)">3 Min</button>  
@@ -196,43 +193,32 @@ th { background: var(--primary); color: white; }
 </div>  
 
 <script>  
-let currentUser = null;  
-let currentLevelIndex = 0;
-let isPaused = false;
-let testRunning = false;
+let currentUser = null, level = 0, isPaused = false, testRunning = false;
 let audioCtx, timer, timeLeft=60, startTime, totalTyped=0;
 
-const typingLevels = [
+const levels = [
     "Technology is evolving rapidly in today's world.",
-    "Efficient typing skills are essential for productivity in the modern digital era.",
+    "Efficient typing skills are essential for productivity in the digital era.",
     "The quick brown fox jumps over the lazy dog while the sun sets behind the hills.",
-    "Quantum computing uses phenomena such as superposition and entanglement.",
     "Innovation distinguishes between a leader and a follower."
 ];
 
 function closeAll(){  
     loginBox.style.display="none"; createBox.style.display="none";  
     adminPanel.style.display="none"; finishOverlay.style.display="none";
-    testBox.style.display="none";
+    settingsBox.style.display="none"; if(typeof testBox !== 'undefined') testBox.style.display="none";
 }  
 
-function changeTheme() {
-    let theme = document.getElementById("themeSelect").value;
-    document.body.className = theme === "default" ? "" : theme;
-}
+function openSettings() { stopTyping(); closeAll(); settingsBox.style.display="block"; }
+function changeTheme() { document.body.className = document.getElementById("themeSelect").value; }
 
-// Sound Logic
 function playKeySound(){  
     let type = document.getElementById("audioSelect").value;
-    if(type === "none" || !audioCtx) return;  
-    let osc = audioCtx.createOscillator();  
-    let gain = audioCtx.createGain();  
-    
-    if(type === "mechanical") { osc.type = "square"; osc.frequency.value = 150; gain.gain.value = 0.02; }
-    else if(type === "wood") { osc.type = "sine"; osc.frequency.value = 400; gain.gain.value = 0.05; }
-    else { osc.type = "triangle"; osc.frequency.value = 250; gain.gain.value = 0.05; }
-
-    osc.connect(gain); gain.connect(audioCtx.destination);  
+    if(type === "silent" || !audioCtx) return;  
+    let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();  
+    osc.type = (type === "mechanical") ? "square" : "triangle";
+    osc.frequency.value = (type === "mechanical") ? 150 : 250;
+    gain.gain.value = 0.05; osc.connect(gain); gain.connect(audioCtx.destination);  
     osc.start(); osc.stop(audioCtx.currentTime + 0.05);  
 }  
 
@@ -262,8 +248,7 @@ window.addEventListener("keydown", (e) => {
 });
 
 function loadText(){  
-    closeAll(); document.getElementById("gameButtons").style.display="none";  
-    currentText = typingLevels[currentLevelIndex % typingLevels.length]; 
+    closeAll(); currentText = levels[level % levels.length]; 
     let html=""; for(let i=0;i<currentText.length;i++){ html+="<span>"+currentText[i]+"</span>"; }  
     task.innerHTML=html; hiddenInput.value=""; startTime = new Date().getTime();  
     isPaused = false; testRunning = true; clearInterval(timer); timer = setInterval(updateTimer, 1000);  
@@ -292,9 +277,9 @@ async function finishTest(){
     if(currentUser) await fetch('/api/update_stats', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({u: currentUser, wpm: wpm, acc: acc})});
 }  
 
-function nextLevel() { currentLevelIndex++; timeLeft=60; loadText(); }
+function nextLevel() { level++; timeLeft=60; loadText(); }
 function restartTest() { timeLeft=60; loadText(); }
-function showTest(){ closeAll(); document.getElementById("testBox").style.display="block"; }  
+function showTest(){ closeAll(); testBox.style.display="block"; }  
 function startTest(t){ timeLeft=t; loadText(); }  
 function startSite(){ welcomeScreen.style.display="none"; loadText(); }  
 function focusInput(){ document.getElementById("hiddenInput").focus(); }
