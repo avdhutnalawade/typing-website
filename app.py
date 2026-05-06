@@ -83,15 +83,22 @@ body.neon-theme { --bg: #000; --text: #0f0; --primary: #f0f; }
 body.matrix-theme { --bg: #000; --text: #00ff41; --primary: #003b00; }
 
 .left-menu{ position:fixed; top:120px; left:20px; display:flex; flex-direction:column; gap:10px; z-index:10000; }  
-.left-menu button{ padding:10px; border:none; border-radius:6px; background: var(--primary); color: white; cursor:pointer; font-weight: bold; }  
-.modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(10, 10, 30, 0.98); padding:30px; border-radius:15px; display:none; z-index:99999; min-width: 400px; border: 2px solid var(--primary); box-shadow: 0 0 30px rgba(0, 198, 255, 0.3); }  
+.left-menu button{ padding:10px; border:none; border-radius:6px; background: var(--primary); color: white; cursor:pointer; font-weight: bold; width: 140px; text-align: left; }  
+
+.modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(10, 10, 30, 0.98); padding:30px; border-radius:15px; display:none; z-index:99999; min-width: 400px; max-width: 650px; border: 2px solid var(--primary); box-shadow: 0 0 30px rgba(0, 198, 255, 0.3); max-height: 85vh; overflow-y: auto; }  
 .modal input, .modal select { width:100%; margin:10px 0; padding:10px; border:none; border-radius:5px; box-sizing: border-box; background: #222; color: white; }  
+
+/* Learn Steps CSS */
+.step-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #28a745; }
+.video-frame { width: 100%; height: 250px; border-radius: 8px; margin-top: 10px; background: #000; }
+
 #statsTable { margin-top: 20px; max-height: 300px; overflow-y: auto; }
 table { width: 100%; border-collapse: collapse; color: white; font-size: 14px; }
 th, td { border: 1px solid #333; padding: 12px; text-align: center; }
 th { background: #0072ff; color: white; }
 tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 .user-circle{ background: var(--primary); padding:8px 15px; border-radius:20px; }  
+
 #welcomeScreen{ position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg,#000428,#004e92); display:flex; justify-content:center; align-items:center; flex-direction:column; z-index:100000; }  
 #welcomeText{ font-size:45px; font-family:'Pacifico', cursive; color:#00ffff; text-shadow:0 0 20px #00ffff; }  
 .start-btn{ margin-top:20px; padding:12px 25px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; cursor:pointer; font-size:16px; }  
@@ -105,12 +112,7 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 #timer { font-size:28px; color:#00ffcc; text-shadow:0 0 10px #00ffff; margin-bottom:15px; }  
 .btn { margin:10px; padding:12px 30px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; font-size:16px; cursor:pointer; }  
 
-#finishOverlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(10, 10, 30, 0.95);
-    display: none; justify-content: center; align-items: center;
-    flex-direction: column; z-index: 200000; text-align: center;
-}
+#finishOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 30, 0.95); display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 200000; text-align: center; }
 #finishOverlay h1 { font-family: 'Pacifico', cursive; color: #00ffff; font-size: 60px; margin: 0; }
 #finalScore { font-size: 28px; color: #00ff88; margin: 20px 0; }
 </style>  </head>  <body onclick="focusInput(); unlockAudio();">  
@@ -125,12 +127,37 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 </div>
 
 <div class="left-menu">  
-<button onclick="showTest()">Test</button>  
-<button onclick="openLogin()">Login</button>  
-<button onclick="openCreate()">Create Account</button>  
-<button onclick="openAdmin()" style="background:#ff4d4d;">ADMIN PANEL</button>
+<button onclick="showTest()">Test ⏱</button>  
+<button onclick="openLogin()">Login 👤</button>  
+<button onclick="openCreate()">Create Account ✨</button>  
+<button onclick="openAdmin()" style="background:#ff4d4d;">ADMIN PANEL 📊</button>
 <button onclick="openSettings()" style="background:#ffa500;">SETTINGS ⚙️</button>
+<button onclick="openLearn()" style="background:#28a745;">LEARN 🎓</button>
 </div>  
+
+<div class="modal" id="learnBox" onclick="event.stopPropagation()">
+    <h2 style="color: #28a745">Typing Mastery (Step-by-Step)</h2>
+    
+    <div class="step-item">
+        <h3>Step 1: Finger Positioning (Beginner)</h3>
+        <p>Position your fingers on the 'Home Row'. Use 3D animation to understand the base layout.</p>
+        <iframe class="video-frame" src="https://www.youtube.com/embed/1ArVtCQqQRE" frameborder="0" allowfullscreen></iframe>
+    </div>
+
+    <div class="step-item">
+        <h3>Step 2: Key Mapping (Intermediate)</h3>
+        <p>Learn which finger is responsible for which key without looking down.</p>
+        <iframe class="video-frame" src="https://www.youtube.com/embed/6_f7SreQ59U" frameborder="0" allowfullscreen></iframe>
+    </div>
+
+    <div class="step-item">
+        <h3>Step 3: 100+ WPM Secrets (Advanced)</h3>
+        <p>Advanced 3D techniques for maximum speed and zero errors.</p>
+        <iframe class="video-frame" src="https://www.youtube.com/embed/Xm_66o70o0M" frameborder="0" allowfullscreen></iframe>
+    </div>
+
+    <button class="btn" onclick="closeAll()">Start Practice</button>
+</div>
 
 <div class="modal" id="settingsBox" onclick="event.stopPropagation()">
     <h2 style="color: var(--primary)">Settings</h2>
@@ -152,26 +179,17 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 </div>
 
 <div class="modal" id="loginBox" onclick="event.stopPropagation()">  
-<h3>Login</h3>  
-<input type="text" id="username" placeholder="Username">  
-<input type="password" id="password" placeholder="Password">  
-<button class="btn" onclick="login()">Login</button>  
-<button class="btn" style="background:gray" onclick="closeAll()">Close</button>
+<h3>Login</h3>  <input type="text" id="username" placeholder="Username"> <input type="password" id="password" placeholder="Password">  
+<button class="btn" onclick="login()">Login</button> <button class="btn" style="background:gray" onclick="closeAll()">Close</button>
 </div>  
 
 <div class="modal" id="createBox" onclick="event.stopPropagation()">  
-<h3>Create Account</h3>  
-<input type="text" id="newUsername" placeholder="Username">  
-<input type="password" id="newPassword" placeholder="Password">  
-<button class="btn" onclick="createAccount()">Create</button>  
-<button class="btn" style="background:gray" onclick="closeAll()">Close</button>
+<h3>Create Account</h3> <input type="text" id="newUsername" placeholder="Username"> <input type="password" id="newPassword" placeholder="Password">  
+<button class="btn" onclick="createAccount()">Create</button> <button class="btn" style="background:gray" onclick="closeAll()">Close</button>
 </div>  
 
 <div class="modal" id="adminPanel" onclick="event.stopPropagation()">
-    <h2 style="color:#00ffff">Admin Leaderboard</h2>
-    <div id="statsTable"></div>
-    <br>
-    <button class="btn" onclick="closeAll()">Close Dashboard</button>
+    <h2 style="color:#00ffff">Admin Leaderboard</h2> <div id="statsTable"></div> <br> <button class="btn" onclick="closeAll()">Close</button>
 </div>
 
 <div id="welcomeScreen">  
@@ -195,206 +213,98 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 </div>  
 </div>  
 
-<div class="test-box" id="testBox" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(255,255,255,0.1); padding:25px; border-radius:15px; text-align:center;">  
+<div class="test-box" id="testBox" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(255,255,255,0.1); padding:25px; border-radius:15px; text-align:center; z-index: 50000;">  
 <h2>Select Time</h2>  
-<button onclick="startTest(60)">1 Min</button>  
-<button onclick="startTest(180)">3 Min</button>  
-<button onclick="startTest(300)">5 Min</button>  
-<button onclick="startTest(600)">10 Min</button>  
+<button class="btn" onclick="startTest(60)">1 Min</button>  <button class="btn" onclick="startTest(180)">3 Min</button> <button class="btn" onclick="startTest(300)">5 Min</button>  
 </div>  
 
 <script>  
-let currentUser = null;  
-let currentLevelIndex = 0;
-let isPaused = false;
-let testRunning = false;
-let audioCtx;
-let timer, timeLeft=60;  
-let startTime,totalTyped=0;  
+let currentUser = null, currentLevelIndex = 0, isPaused = false, testRunning = false;
+let audioCtx, timer, timeLeft=60, startTime, totalTyped=0, currentText="";
 
 const typingLevels = [
     "Technology is evolving rapidly in today's world.",
     "Efficient typing skills are essential for productivity in the modern digital era.",
-    "The quick brown fox jumps over the lazy dog while the sun sets behind the green hills.",
-    "Quantum computing uses quantum-mechanical phenomena such as superposition and entanglement.",
-    "Complex systems require a profound understanding of architecture and design patterns to succeed."
+    "The quick brown fox jumps over the lazy dog while the sun sets behind the green hills."
 ];
 
 function closeAll(){  
-    loginBox.style.display="none";  
-    createBox.style.display="none";  
-    settingsBox.style.display="none";
-    if(document.getElementById("testBox")) document.getElementById("testBox").style.display="none";  
-    adminPanel.style.display="none";
-    finishOverlay.style.display="none";
+    ['loginBox', 'createBox', 'settingsBox', 'adminPanel', 'learnBox', 'testBox', 'finishOverlay'].forEach(id => {
+        let el = document.getElementById(id); if(el) el.style.display="none";
+    });
 }  
 
+function openLearn() { stopTyping(); closeAll(); document.getElementById('learnBox').style.display="block"; }
 function openSettings() { stopTyping(); closeAll(); settingsBox.style.display="block"; }
 function changeTheme() { document.body.className = document.getElementById("themeSelect").value; }
 
 function openLogin(){ stopTyping(); closeAll(); loginBox.style.display="block"; username.focus(); }  
-
 async function login(){  
-    let u = document.getElementById("username").value;  
-    let p = document.getElementById("password").value;  
-    const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({u, p})
-    });
-    if(res.ok){  
-        currentUser = u;  
-        document.getElementById("userDisplay").innerHTML = "<span class='user-circle'>👤 "+u+"</span> <button onclick='logout()' style='background:none; border:1px solid #ff4d4d; color:#ff4d4d; border-radius:5px; margin-left:10px; cursor:pointer;'>Logout</button>";  
-        alert("Login Successful!");  
-        closeAll();  
-    } else{ alert("Wrong Username or Password"); }  
+    let u = username.value, p = password.value;  
+    const res = await fetch('/api/login', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({u, p})});
+    if(res.ok){ currentUser = u; userDisplay.innerHTML = "<span class='user-circle'>👤 "+u+"</span>"; closeAll(); } 
+    else alert("Login Failed");  
 }  
-
-function openCreate(){ stopTyping(); closeAll(); createBox.style.display="block"; newUsername.focus(); }  
-
+function openCreate(){ stopTyping(); closeAll(); createBox.style.display="block"; }  
 async function createAccount(){  
-    let u = document.getElementById("newUsername").value;  
-    let p = document.getElementById("newPassword").value;  
-    if(u && p){  
-        const res = await fetch('/api/create', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({u, p})
-        });
-        if(res.ok){ alert("Account Created for " + u); closeAll(); } 
-        else { alert("User already exists or error!"); }
-    } else{ alert("Enter Username & Password"); }  
-}  
-
-function logout(){ currentUser = null; document.getElementById("userDisplay").innerHTML = ""; }  
-
+    let u = newUsername.value, p = newPassword.value;
+    const res = await fetch('/api/create', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({u, p})});
+    if(res.ok) alert("Created!"); closeAll();
+}
 async function openAdmin(){
-    stopTyping();
-    closeAll();
-    document.getElementById("adminPanel").style.display = "block";
-    const res = await fetch('/api/admin_data');
-    const userStats = await res.json();
-    let sortedUsers = Object.keys(userStats).sort((a,b) => userStats[b].bestWpm - userStats[a].bestWpm);
-    let html = "<table><tr><th>Rank</th><th>User</th><th>Tests</th><th>Max WPM</th><th>Accuracy</th></tr>";
-    sortedUsers.forEach((name, index) => {
-        let s = userStats[name];
-        html += `<tr><td>#${index + 1}</td><td>${name}</td><td>${s.attempts}</td><td>${s.bestWpm}</td><td>${s.accuracy}%</td></tr>`;
-    });
-    html += "</table>";
-    document.getElementById("statsTable").innerHTML = html;
+    stopTyping(); closeAll(); adminPanel.style.display="block";
+    const res = await fetch('/api/admin_data'); const data = await res.json();
+    let html = "<table><tr><th>User</th><th>Max WPM</th></tr>";
+    for(let u in data) { html += `<tr><td>${u}</td><td>${data[u].bestWpm}</td></tr>`; }
+    statsTable.innerHTML = html + "</table>";
 }
 
-function stopTyping(){ 
-    clearInterval(timer); 
-    isPaused = true;
-    document.getElementById("hiddenInput").blur(); 
-}  
+function stopTyping(){ clearInterval(timer); isPaused = true; }  
 
-function resumeTyping(){
-    if(isPaused && timeLeft > 0 && testRunning){
-        isPaused = false;
-        clearInterval(timer);
-        timer = setInterval(updateTimer, 1000);
-        document.getElementById("hiddenInput").focus();
-    }
-}
-
-window.addEventListener("keydown", function(e) {
-    if(e.code === "Space" && isPaused && finishOverlay.style.display !== "flex" && testRunning) {
-        resumeTyping();
-        e.preventDefault();
-    }
-    if(e.code === "Enter" && testRunning) {
-        finishTest();
-    }
+window.addEventListener("keydown", (e) => {
+    if(e.code === "Space" && isPaused && testRunning) { isPaused = false; timer = setInterval(updateTimer, 1000); }
+    if(e.code === "Enter" && testRunning) finishTest();
 });
 
-function unlockAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }  
-function playKeySound(){  
-    let type = document.getElementById("audioSelect").value;
-    if(type === "silent" || !audioCtx) return;  
-    let osc = audioCtx.createOscillator();  
-    let gain = audioCtx.createGain();  
-    
-    if(type === "mechanical") {
-        osc.type = "sawtooth";
-        osc.frequency.value = 150 + Math.random()*50;
-        gain.gain.value = 0.02;
-    } else {
-        osc.type = "square";
-        osc.frequency.value = 200 + Math.random()*100;
-        gain.gain.value = 0.05;
-    }
-    
-    osc.connect(gain); gain.connect(audioCtx.destination);  
-    osc.start(); osc.stop(audioCtx.currentTime + 0.05);  
-}  
-
 function loadText(){  
-    closeAll();
-    result.innerHTML=""; 
-    document.getElementById("gameButtons").style.display="none";  
-    currentText = typingLevels[currentLevelIndex % typingLevels.length]; 
-    let html="";  
-    for(let i=0;i<currentText.length;i++){ html+="<span>"+currentText[i]+"</span>"; }  
-    task.innerHTML=html; hiddenInput.value=""; 
-    startTime = new Date().getTime();  
-    isPaused = false;
-    testRunning = true;
-    clearInterval(timer); 
-    timer = setInterval(updateTimer, 1000);  
+    closeAll(); currentText = typingLevels[currentLevelIndex % typingLevels.length]; 
+    let html=""; for(let char of currentText) html += `<span>${char}</span>`;
+    task.innerHTML = html; hiddenInput.value = ""; startTime = new Date().getTime();  
+    isPaused = false; testRunning = true; clearInterval(timer); timer = setInterval(updateTimer, 1000);  
 }  
 
-function updateTimer(){  
-    if(!isPaused){
-        timeLeft--; 
-        document.getElementById("timer").innerText="⏱ "+timeLeft+" sec";  
-        if(timeLeft<=0) finishTest();  
-    }
-}  
+function updateTimer(){ if(!isPaused){ timeLeft--; document.getElementById("timer").innerText="⏱ "+timeLeft+" sec"; if(timeLeft<=0) finishTest(); } }  
 
-function focusInput(){ if(!isPaused && testRunning) document.getElementById("hiddenInput").focus(); }  
-
-hiddenInput.addEventListener("input",function(){  
+hiddenInput.addEventListener("input", function() {  
     if(isPaused || !testRunning) return;
-    playKeySound();  
-    let input=this.value;  
-    let spans=document.querySelectorAll("#task span");  
-    totalTyped=input.length;  
-    for(let i=0;i<spans.length;i++){  
-        if(input[i]==null) spans[i].classList.remove("correct","wrong");  
-        else if(input[i]===currentText[i]){ spans[i].classList.add("correct"); spans[i].classList.remove("wrong"); } 
-        else { spans[i].classList.add("wrong"); spans[i].classList.remove("correct"); }  
-    }  
+    playKeySound(); let input=this.value, spans=document.querySelectorAll("#task span"); totalTyped=input.length;  
+    spans.forEach((s, i) => { if(input[i]==null) s.className=""; else s.className=(input[i]===currentText[i])?"correct":"wrong"; });
     if(input===currentText) finishTest();  
 });  
 
 async function finishTest(){  
-    clearInterval(timer);  
-    isPaused = true;
-    testRunning = false;
-    let timeUsed = (new Date().getTime() - startTime) / 60000;  
-    let wpm = Math.round((totalTyped/5)/timeUsed) || 0;  
-    let correctChars = document.querySelectorAll(".correct").length;
-    let acc = totalTyped > 0 ? Math.round((correctChars / totalTyped) * 100) : 0;
-
-    document.getElementById("finalScore").innerText = "Speed: " + wpm + " WPM | Accuracy: " + acc + "%";
-    document.getElementById("finishOverlay").style.display = "flex";
-
-    if(currentUser) {
-        await fetch('/api/update_stats', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({u: currentUser, wpm: wpm, acc: acc})
-        });
-    }
+    clearInterval(timer); testRunning = false;
+    let wpm = Math.round((totalTyped/5)/((new Date().getTime()-startTime)/60000)) || 0;
+    finalScore.innerText = "Speed: " + wpm + " WPM";
+    finishOverlay.style.display = "flex";
+    if(currentUser) await fetch('/api/update_stats', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({u: currentUser, wpm: wpm, acc: 100})});
 }  
 
-function nextLevel() { currentLevelIndex++; timeLeft = 60; loadText(); }
-function restartTest() { timeLeft = 60; loadText(); }
-function showTest(){ stopTyping(); closeAll(); document.getElementById("testBox").style.display="block"; }  
-function startTest(t){ timeLeft=t; document.getElementById("testBox").style.display="none"; loadText(); }  
+function nextLevel() { currentLevelIndex++; timeLeft=60; loadText(); }
+function restartTest() { timeLeft=60; loadText(); }
+function showTest(){ stopTyping(); closeAll(); testBox.style.display="block"; }  
+function startTest(t){ timeLeft=t; loadText(); }  
 function startSite(){ welcomeScreen.style.display="none"; loadText(); }  
+function focusInput(){ if(testRunning) hiddenInput.focus(); }
+function unlockAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+function playKeySound(){ 
+    let type = audioSelect.value; if(!audioCtx || type === 'silent') return;
+    let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+    osc.type = type === 'mechanical' ? 'sawtooth' : 'square';
+    osc.frequency.value = 180 + Math.random()*60;
+    gain.gain.value = 0.03; osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+}
 </script>  
 </body>  
 </html>  
