@@ -1,88 +1,4 @@
-from flask import Flask, request, jsonify, render_template_string
-import json
-import os
-from datetime import datetime  # तारीख आणि वेळेसाठी
-
-app = Flask(__name__)
-
-# --- BACKEND DATABASE LOGIC (UPDATED FOR HISTORY) ---
-DB_FILE = 'database.json'
-
-def load_data():
-    if not os.path.exists(DB_FILE):
-        # सुरुवातीचे स्ट्रक्चर ज्यामध्ये इतिहास (history) सेव्ह होईल
-        initial_data = {
-            "users": {"admin": "1234"},
-            "userStats": {"admin": {"attempts": 0, "bestWpm": 0, "accuracy": 0, "history": []}}
-        }
-        save_data(initial_data)
-        return initial_data
-    with open(DB_FILE, 'r') as f:
-        return json.load(f)
-
-def save_data(data):
-    with open(DB_FILE, 'w') as f:
-        json.dump(data, f, indent=4)
-
-# --- ROUTES ---
-@app.route('/')
-def home():
-    return render_template_string(HTML_CODE)
-
-@app.route('/api/login', methods=['POST'])
-def login():
-    data = request.json
-    db = load_data()
-    u, p = data.get('u'), data.get('p')
-    if db['users'].get(u) == p:
-        return jsonify({"status": "success", "stats": db['userStats'].get(u, {})}) # इथली 'RAM' एरर काढली आहे
-    return jsonify({"status": "fail"}), 401
-
-@app.route('/api/create', methods=['POST'])
-def create():
-    data = request.json
-    db = load_data()
-    u, p = data.get('u'), data.get('p')
-    if u in db['users']:
-        return jsonify({"status": "exists"}), 400
-    db['users'][u] = p
-    db['userStats'][u] = {"attempts": 0, "bestWpm": 0, "accuracy": 0, "history": []}
-    save_data(db)
-    return jsonify({"status": "success"})
-
-@app.route('/api/update_stats', methods=['POST'])
-def update_stats():
-    data = request.json
-    db = load_data()
-    u = data.get('u')
-    if u in db['userStats']:
-        if 'history' not in db['userStats'][u]:
-            db['userStats'][u]['history'] = []
-            
-        db['userStats'][u]['attempts'] += 1
-        if data.get('wpm') > db['userStats'][u]['bestWpm']:
-            db['userStats'][u]['bestWpm'] = data.get('wpm')
-        db['userStats'][u]['accuracy'] = data.get('acc')
-        
-        # --- बँक सारखा इतिहास (History) ठेवण्यासाठी बदल ---
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        history_entry = {
-            "date_time": current_time,
-            "wpm": data.get('wpm'),
-            "accuracy": data.get('acc')
-        }
-        db['userStats'][u]['history'].append(history_entry)
-        
-        save_data(db)
-    return jsonify({"status": "success"})
-
-@app.route('/api/admin_data')
-def admin_data():
-    db = load_data()
-    return jsonify(db['userStats'])
-
-# --- HTML / JS CODE ---
+# --- HTML / JS CODE (बटन्स आणि फिल्टरसह अपडेटेड) ---
 HTML_CODE = """
 <!DOCTYPE html>  <html>  
 <head>  
@@ -126,6 +42,10 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 }
 #finishOverlay h1 { font-family: 'Pacifico', cursive; color: #00ffff; font-size: 60px; margin: 0; }
 #finalScore { font-size: 28px; color: #00ff88; margin: 20px 0; }
+
+.filter-btn-container { display: flex; gap: 10px; margin-bottom: 15px; }
+.filter-btn { background: #222; color: white; border: 1px solid var(--primary); padding: 5px 15px; border-radius: 5px; cursor: pointer; }
+.filter-btn.active { background: var(--primary); color: black; font-weight: bold; }
 </style>  </head>  <body onclick="focusInput(); unlockAudio();">  
 
 <div id="finishOverlay">
@@ -196,6 +116,12 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 
 <div class="modal" id="adminPanel" onclick="event.stopPropagation()">
     <h2 style="color:#00ffff">Admin Leaderboard</h2>
+    <div class="filter-btn-container">
+        <button class="filter-btn active" id="btnAll" onclick="filterAdminData('all')">All Time</button>
+        <button class="filter-btn" id="btn1" onclick="filterAdminData(1)">1 Day</button>
+        <button class="filter-btn" id="btn30" onclick="filterAdminData(30)">1 Month</button>
+        <button class="filter-btn" id="btn365" onclick="filterAdminData(365)">1 Year</button>
+    </div>
     <div id="statsTable"></div>
     <br>
     <button class="btn" onclick="closeAll()">Close Dashboard</button>
@@ -239,6 +165,7 @@ let audioCtx;
 let timer, timeLeft=60;  
 let startTime,totalTyped=0;  
 let currentText = "";
+let globalUserStats = {};
 
 const typingLevels = [
     "Technology is evolving rapidly in today's world.",
@@ -302,11 +229,59 @@ async function openAdmin(){
     closeAll();
     document.getElementById("adminPanel").style.display = "block";
     const res = await fetch('/api/admin_data');
-    const userStats = await res.json();
-    let sortedUsers = Object.keys(userStats).sort((a,b) => userStats[b].bestWpm - userStats[a].bestWpm);
+    globalUserStats = await res.json();
+    filterAdminData('all');
+}
+
+function filterAdminData(days) {
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    if(days === 'all') document.getElementById('btnAll').classList.add('active');
+    else if(days === 1) document.getElementById('btn1').classList.add('active');
+    else if(days === 30) document.getElementById('btn30').classList.add('active');
+    else if(days === 365) document.getElementById('btn365').classList.add('active');
+
+    let processedStats = {};
+    let now = new Date();
+
+    Object.keys(globalUserStats).forEach(name => {
+        let user = globalUserStats[name];
+        
+        if (!user.history || days === 'all') {
+            processedStats[name] = {
+                attempts: user.attempts,
+                bestWpm: user.bestWpm,
+                accuracy: user.accuracy
+            };
+            return;
+        }
+
+        let filteredAttempts = 0;
+        let filteredBestWpm = 0;
+        let filteredAcc = 0;
+
+        user.history.forEach(entry => {
+            let entryDate = new Date(entry.date_time.replace(' ', 'T'));
+            let timeDiff = now - entryDate;
+            let daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+
+            if (daysDiff <= days) {
+                filteredAttempts++;
+                if (entry.wpm > filteredBestWpm) filteredBestWpm = entry.wpm;
+                filteredAcc = entry.accuracy;
+            }
+        });
+
+        processedStats[name] = {
+            attempts: filteredAttempts,
+            bestWpm: filteredBestWpm,
+            accuracy: filteredAcc
+        };
+    });
+
+    let sortedUsers = Object.keys(processedStats).sort((a,b) => processedStats[b].bestWpm - processedStats[a].bestWpm);
     let html = "<table><tr><th>Rank</th><th>User</th><th>Tests</th><th>Max WPM</th><th>Accuracy</th></tr>";
     sortedUsers.forEach((name, index) => {
-        let s = userStats[name];
+        let s = processedStats[name];
         html += `<tr><td>#${index + 1}</td><td>${name}</td><td>${s.attempts}</td><td>${s.bestWpm}</td><td>${s.accuracy}%</td></tr>`;
     });
     html += "</table>";
