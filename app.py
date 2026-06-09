@@ -1,4 +1,85 @@
-# --- HTML / JS CODE (बटन्स आणि फिल्टरसह अपडेटेड) ---
+from flask import Flask, request, jsonify, render_template_string
+import json
+import os
+from datetime import datetime, timedelta
+
+app = Flask(__name__)
+
+# --- BACKEND DATABASE LOGIC ---
+DB_FILE = 'database.json'
+
+def load_data():
+    if not os.path.exists(DB_FILE):
+        initial_data = {
+            "users": {"admin": "1234"},
+            "userStats": {"admin": {"attempts": 0, "bestWpm": 0, "accuracy": 0, "history": []}}
+        }
+        save_data(initial_data)
+        return initial_data
+    with open(DB_FILE, 'r') as f:
+        return json.load(f)
+
+def save_data(data):
+    with open(DB_FILE, 'w') as f:
+        json.dump(data, f, indent=4)
+
+# --- ROUTES ---
+@app.route('/')
+def home():
+    return render_template_string(HTML_CODE)
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.json
+    db = load_data()
+    u, p = data.get('u'), data.get('p')
+    if db['users'].get(u) == p:
+        return jsonify({"status": "success", "stats": db['userStats'].get(u, {})})
+    return jsonify({"status": "fail"}), 401
+
+@app.route('/api/create', methods=['POST'])
+def create():
+    data = request.json
+    db = load_data()
+    u, p = data.get('u'), data.get('p')
+    if u in db['users']:
+        return jsonify({"status": "exists"}), 400
+    db['users'][u] = p
+    db['userStats'][u] = {"attempts": 0, "bestWpm": 0, "accuracy": 0, "history": []}
+    save_data(db)
+    return jsonify({"status": "success"})
+
+@app.route('/api/update_stats', methods=['POST'])
+def update_stats():
+    data = request.json
+    db = load_data()
+    u = data.get('u')
+    if u in db['userStats']:
+        if 'history' not in db['userStats'][u]:
+            db['userStats'][u]['history'] = []
+            
+        db['userStats'][u]['attempts'] += 1
+        if data.get('wpm') > db['userStats'][u]['bestWpm']:
+            db['userStats'][u]['bestWpm'] = data.get('wpm')
+        db['userStats'][u]['accuracy'] = data.get('acc')
+        
+        # तारीख आणि वेळेसह इतिहास एंट्री तयार करणे
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        history_entry = {
+            "date_time": current_time,
+            "wpm": data.get('wpm'),
+            "accuracy": data.get('acc')
+        }
+        db['userStats'][u]['history'].append(history_entry)
+        save_data(db)
+    return jsonify({"status": "success"})
+
+@app.route('/api/admin_data')
+def admin_data():
+    db = load_data()
+    return jsonify(db['userStats'])
+
+# --- HTML / CSS / JAVASCRIPT CODE ---
 HTML_CODE = """
 <!DOCTYPE html>  <html>  
 <head>  
@@ -43,8 +124,9 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 #finishOverlay h1 { font-family: 'Pacifico', cursive; color: #00ffff; font-size: 60px; margin: 0; }
 #finalScore { font-size: 28px; color: #00ff88; margin: 20px 0; }
 
+/* फिल्टर बटन्स डिझाईन */
 .filter-btn-container { display: flex; gap: 10px; margin-bottom: 15px; }
-.filter-btn { background: #222; color: white; border: 1px solid var(--primary); padding: 5px 15px; border-radius: 5px; cursor: pointer; }
+.filter-btn { background: #222; color: white; border: 1px solid var(--primary); padding: 5px 15px; border-radius: 5px; cursor: pointer; font-family: inherit; }
 .filter-btn.active { background: var(--primary); color: black; font-weight: bold; }
 </style>  </head>  <body onclick="focusInput(); unlockAudio();">  
 
@@ -165,7 +247,7 @@ let audioCtx;
 let timer, timeLeft=60;  
 let startTime,totalTyped=0;  
 let currentText = "";
-let globalUserStats = {};
+let globalUserStats = {}; // डेटाबेस सेव्ह करण्यासाठी ग्लोबल व्हेरिएबल
 
 const typingLevels = [
     "Technology is evolving rapidly in today's world.",
@@ -233,6 +315,7 @@ async function openAdmin(){
     filterAdminData('all');
 }
 
+// फ्रंटएंडवर दिवसानुसार फिल्टर मोजणारे फंक्शन
 function filterAdminData(days) {
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
     if(days === 'all') document.getElementById('btnAll').classList.add('active');
@@ -365,7 +448,7 @@ hiddenInput.addEventListener("input",function(){
     totalTyped=input.length;  
     for(let i=0;i<spans.length;i++){  
         if(input[i]==null) spans[i].classList.remove("correct","wrong");  
-        else if(input[i]===currentText[i]){ spans[i].classList.add("correct"); spans[i].classList.remove("wrong"); } 
+        else if(input[i]===currentText[i]){ spans[i].classList.add("correct"); spans[i].classList.remove("wrong"); }  
         else { spans[i].classList.add("wrong"); spans[i].classList.remove("correct"); }  
     }  
     if(input===currentText) finishTest();  
