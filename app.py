@@ -419,4 +419,4 @@ function startSite(){ welcomeScreen.style.display="none"; loadText(); }
 """
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True) shot made methodology de ppt made add karayla
