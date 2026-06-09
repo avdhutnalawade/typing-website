@@ -1,17 +1,19 @@
 from flask import Flask, request, jsonify, render_template_string
 import json
 import os
+from datetime import datetime  # तारीख आणि वेळेसाठी
 
 app = Flask(__name__)
 
-# --- BACKEND DATABASE LOGIC (ORIGINAL) ---
+# --- BACKEND DATABASE LOGIC (UPDATED FOR HISTORY) ---
 DB_FILE = 'database.json'
 
 def load_data():
     if not os.path.exists(DB_FILE):
+        # सुरुवातीचे स्ट्रक्चर ज्यामध्ये इतिहास (history) सेव्ह होईल
         initial_data = {
             "users": {"admin": "1234"},
-            "userStats": {"admin": {"attempts": 0, "bestWpm": 0, "accuracy": 0}}
+            "userStats": {"admin": {"attempts": 0, "bestWpm": 0, "accuracy": 0, "history": []}}
         }
         save_data(initial_data)
         return initial_data
@@ -22,7 +24,7 @@ def save_data(data):
     with open(DB_FILE, 'w') as f:
         json.dump(data, f, indent=4)
 
-# --- ROUTES (ORIGINAL) ---
+# --- ROUTES ---
 @app.route('/')
 def home():
     return render_template_string(HTML_CODE)
@@ -33,7 +35,7 @@ def login():
     db = load_data()
     u, p = data.get('u'), data.get('p')
     if db['users'].get(u) == p:
-        return jsonify({"status": "success", "stats": db['userStats'].get(u, {})})
+        return jsonify({"status": "success", "stats": db['userStats'].get(u, {})}) # इथली 'RAM' एरर काढली आहे
     return jsonify({"status": "fail"}), 401
 
 @app.route('/api/create', methods=['POST'])
@@ -44,7 +46,7 @@ def create():
     if u in db['users']:
         return jsonify({"status": "exists"}), 400
     db['users'][u] = p
-    db['userStats'][u] = {"attempts": 0, "bestWpm": 0, "accuracy": 0}
+    db['userStats'][u] = {"attempts": 0, "bestWpm": 0, "accuracy": 0, "history": []}
     save_data(db)
     return jsonify({"status": "success"})
 
@@ -54,10 +56,24 @@ def update_stats():
     db = load_data()
     u = data.get('u')
     if u in db['userStats']:
+        if 'history' not in db['userStats'][u]:
+            db['userStats'][u]['history'] = []
+            
         db['userStats'][u]['attempts'] += 1
         if data.get('wpm') > db['userStats'][u]['bestWpm']:
             db['userStats'][u]['bestWpm'] = data.get('wpm')
         db['userStats'][u]['accuracy'] = data.get('acc')
+        
+        # --- बँक सारखा इतिहास (History) ठेवण्यासाठी बदल ---
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        history_entry = {
+            "date_time": current_time,
+            "wpm": data.get('wpm'),
+            "accuracy": data.get('acc')
+        }
+        db['userStats'][u]['history'].append(history_entry)
+        
         save_data(db)
     return jsonify({"status": "success"})
 
@@ -75,21 +91,15 @@ HTML_CODE = """
 <style>  
 :root { --bg: #1a1a2e; --text: white; --primary: #00c6ff; }
 body { margin:0; font-family:'Roboto Mono', monospace; background: var(--bg); color: var(--text); overflow:hidden; transition: 0.3s; }  
-
-/* Themes */
 body.light-theme { --bg: #f0f2f5; --text: #1a1a2e; --primary: #0072ff; }
 body.neon-theme { --bg: #000; --text: #0f0; --primary: #f0f; }
 body.matrix-theme { --bg: #000; --text: #00ff41; --primary: #003b00; }
-
 .left-menu{ position:fixed; top:120px; left:20px; display:flex; flex-direction:column; gap:10px; z-index:10000; }  
 .left-menu button{ padding:10px; border:none; border-radius:6px; background: var(--primary); color: white; cursor:pointer; font-weight: bold; width: 150px; text-align: left;}  
-
 .modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(10, 10, 30, 0.98); padding:30px; border-radius:15px; display:none; z-index:99999; min-width: 400px; max-width: 600px; border: 2px solid var(--primary); box-shadow: 0 0 30px rgba(0, 198, 255, 0.3); max-height: 80vh; overflow-y: auto;}  
 .modal input, .modal select { width:100%; margin:10px 0; padding:10px; border:none; border-radius:5px; box-sizing: border-box; background: #222; color: white; }  
-
 .step-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #28a745; text-align: left; }
 .video-frame { width: 100%; height: 250px; border-radius: 8px; margin-top: 10px; }
-
 #statsTable { margin-top: 20px; max-height: 300px; overflow-y: auto; }
 table { width: 100%; border-collapse: collapse; color: white; font-size: 14px; }
 th, td { border: 1px solid #333; padding: 12px; text-align: center; }
@@ -108,7 +118,6 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
 #hiddenInput { opacity:0; position:absolute; }  
 #timer { font-size:28px; color:#00ffcc; text-shadow:0 0 10px #00ffff; margin-bottom:15px; }  
 .btn { margin:10px; padding:12px 30px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; font-size:16px; cursor:pointer; }  
-
 #finishOverlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(10, 10, 30, 0.95);
@@ -419,4 +428,4 @@ function startSite(){ welcomeScreen.style.display="none"; loadText(); }
 """
 
 if __name__ == "__main__":
-    app.run(debug=True) shot made methodology de ppt made add karayla
+    app.run(debug=True)
