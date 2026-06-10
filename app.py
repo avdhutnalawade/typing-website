@@ -10,7 +10,7 @@ def load_data():
     if not os.path.exists(DB_FILE):
         initial_data = {
             "users": {"admin": "1234"},
-            "userStats": {"admin": {"attempts": 0, "bestWpm": 0, "accuracy": 0, "history": []}}
+            "userStats": {"admin": {"attempts": 0, "bestWpm": 0, "accuracy": 0, "history": [], "currentLevel": 0}}
         }
         save_data(initial_data)
         return initial_data
@@ -42,7 +42,7 @@ def create():
     if u in db['users']:
         return jsonify({"status": "exists"}), 400
     db['users'][u] = p
-    db['userStats'][u] = {"attempts": 0, "bestWpm": 0, "accuracy": 0, "history": []}
+    db['userStats'][u] = {"attempts": 0, "bestWpm": 0, "accuracy": 0, "history": [], "currentLevel": 0}
     save_data(db)
     return jsonify({"status": "success"})
 
@@ -58,6 +58,10 @@ def update_stats():
         if data.get('wpm') > db['userStats'][u]['bestWpm']:
             db['userStats'][u]['bestWpm'] = data.get('wpm')
         db['userStats'][u]['accuracy'] = data.get('acc')
+        
+        # [ADD] इकडे युझरची पुढची लेव्हल सेव्ह होईल जेणेकरून तो तिथूनच पुढे जाईल
+        if 'level' in data:
+            db['userStats'][u]['currentLevel'] = data.get('level')
         
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         db['userStats'][u]['history'].append({"date_time": current_time, "wpm": data.get('wpm'), "accuracy": data.get('acc')})
@@ -462,9 +466,19 @@ async function login(){
     const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({u, p}) });
     if(res.ok){ 
         currentUser = u; 
+        let data = await res.json();
+        
+        // [ADD] लॉगिन झाल्यावर युझरची आधी सेव्ह असलेली लेव्हल इकडे लोड होईल
+        if (data.stats && data.stats.currentLevel !== undefined) {
+            currentLevelIndex = data.stats.currentLevel;
+        } else {
+            currentLevelIndex = 0;
+        }
+        
         document.getElementById("userDisplay").innerHTML = "<span class='user-circle'>👤 "+u+"</span> <button onclick='logout()' style='background:none; border:1px solid #ff4d4d; color:#ff4d4d; border-radius:5px; margin-left:10px; cursor:pointer;'>Logout</button>"; 
-        alert("Login Successful!"); 
+        alert("Login Successful! Resuming from your saved level."); 
         closeAll(); 
+        loadText(); // [ADD] लॉगिन झाल्यावर डायरेक्ट सेव्ह झालेल्या लेव्हलची टेस्ट लोड होईल
     } else { 
         alert("Wrong Username or Password"); 
     }
@@ -476,13 +490,11 @@ async function createAccount(){
     let u = document.getElementById("newUsername").value.trim(); 
     let p = document.getElementById("newPassword").value.trim();
     
-    // 1. Username Length Check (Min 8 Characters)
     if(u.length < 8){
         alert("Username must be at least 8 characters long!");
         return;
     }
     
-    // 2. Strong Password Policy Check (Regex)
     const strongPasswordRegex = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})/;
     if(!strongPasswordRegex.test(p)){
         alert("Password is too weak!\\n\\nIt must contain:\\n- At least 8 characters\\n- One Uppercase letter (A-Z)\\n- One Number (0-9)\\n- One Special Character (!@#$%^&*)");
@@ -497,7 +509,7 @@ async function createAccount(){
     }
 }
 
-function logout(){ currentUser = null; document.getElementById("userDisplay").innerHTML = ""; }
+function logout(){ currentUser = null; document.getElementById("userDisplay").innerHTML = ""; currentLevelIndex = 0; loadText(); }
 
 async function openAdmin(){ 
     stopTyping(); 
@@ -620,11 +632,21 @@ async function finishTest(){
     document.getElementById("finishOverlay").style.display = "flex";
     
     if(currentUser) { 
-        await fetch('/api/update_stats', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({u: currentUser, wpm: wpm, acc: acc}) }); 
+        // [ADD] इथे 'level: currentLevelIndex' पाठवून आपण डेटाबेसला युझरची सध्याची प्रोग्रेस अपडेट करत आहोत
+        await fetch('/api/update_stats', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({u: currentUser, wpm: wpm, acc: acc, level: currentLevelIndex}) }); 
     }
 }
 
-function nextLevel() { currentLevelIndex++; timeLeft = 60; loadText(); }
+function nextLevel() { 
+    currentLevelIndex++; 
+    timeLeft = 60; 
+    
+    // [ADD] पुढच्या लेव्हलला जाताना डेटाबेसमध्ये ती सेव्ह होईल जेणेकरून नंतर आल्यावर गेम इथूनच सुरू होईल
+    if(currentUser) {
+        fetch('/api/update_stats', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({u: currentUser, wpm: 0, acc: 0, level: currentLevelIndex}) });
+    }
+    loadText(); 
+}
 function restartTest() { timeLeft = 60; loadText(); }
 function showTest(){ stopTyping(); closeAll(); document.getElementById("testBox").style.display="block"; }
 function startTest(t){ timeLeft=t; document.getElementById("testBox").style.display="none"; loadText(); }
