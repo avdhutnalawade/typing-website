@@ -1,17 +1,15 @@
 from flask import Flask, request, jsonify, render_template_string
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 app = Flask(__name__)
-
-# --- BACKEND DATABASE LOGIC ---
 DB_FILE = 'database.json'
 
 def load_data():
     if not os.path.exists(DB_FILE):
         initial_data = {
-            "users": {"admin": "1234"},
+            "users": {"admin": "Admin@1234"},  # Updated default password to match new strong policy
             "userStats": {"admin": {"attempts": 0, "bestWpm": 0, "accuracy": 0, "history": []}}
         }
         save_data(initial_data)
@@ -23,7 +21,6 @@ def save_data(data):
     with open(DB_FILE, 'w') as f:
         json.dump(data, f, indent=4)
 
-# --- ROUTES ---
 @app.route('/')
 def home():
     return render_template_string(HTML_CODE)
@@ -63,7 +60,6 @@ def update_stats():
             db['userStats'][u]['bestWpm'] = data.get('wpm')
         db['userStats'][u]['accuracy'] = data.get('acc')
         
-        # तारीख आणि वेळेसह इतिहास एंट्री तयार करणे
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         history_entry = {
             "date_time": current_time,
@@ -79,411 +75,694 @@ def admin_data():
     db = load_data()
     return jsonify(db['userStats'])
 
-# --- HTML / CSS / JAVASCRIPT CODE ---
+# ==================== FRONTEND (HTML, CSS, JS) ====================
 HTML_CODE = """
-<!DOCTYPE html>  <html>  
-<head>  
-<title>Beginner Typing Speed Test</title>  
-<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&family=Pacifico&display=swap" rel="stylesheet">  
-<style>  
-:root { --bg: #1a1a2e; --text: white; --primary: #00c6ff; }
-body { margin:0; font-family:'Roboto Mono', monospace; background: var(--bg); color: var(--text); overflow:hidden; transition: 0.3s; }  
-body.light-theme { --bg: #f0f2f5; --text: #1a1a2e; --primary: #0072ff; }
-body.neon-theme { --bg: #000; --text: #0f0; --primary: #f0f; }
-body.matrix-theme { --bg: #000; --text: #00ff41; --primary: #003b00; }
-.left-menu{ position:fixed; top:120px; left:20px; display:flex; flex-direction:column; gap:10px; z-index:10000; }  
-.left-menu button{ padding:10px; border:none; border-radius:6px; background: var(--primary); color: white; cursor:pointer; font-weight: bold; width: 150px; text-align: left;}  
-.modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(10, 10, 30, 0.98); padding:30px; border-radius:15px; display:none; z-index:99999; min-width: 400px; max-width: 600px; border: 2px solid var(--primary); box-shadow: 0 0 30px rgba(0, 198, 255, 0.3); max-height: 80vh; overflow-y: auto;}  
-.modal input, .modal select { width:100%; margin:10px 0; padding:10px; border:none; border-radius:5px; box-sizing: border-box; background: #222; color: white; }  
-.step-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #28a745; text-align: left; }
-.video-frame { width: 100%; height: 250px; border-radius: 8px; margin-top: 10px; }
-#statsTable { margin-top: 20px; max-height: 300px; overflow-y: auto; }
-table { width: 100%; border-collapse: collapse; color: white; font-size: 14px; }
-th, td { border: 1px solid #333; padding: 12px; text-align: center; }
-th { background: #0072ff; color: white; }
-tr:nth-child(even) { background: rgba(255,255,255,0.05); }
-.user-circle{ background: var(--primary); padding:8px 15px; border-radius:20px; }  
-#welcomeScreen{ position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg,#000428,#004e92); display:flex; justify-content:center; align-items:center; flex-direction:column; z-index:100000; }  
-#welcomeText{ font-size:45px; font-family:'Pacifico', cursive; color:#00ffff; text-shadow:0 0 20px #00ffff; }  
-.start-btn{ margin-top:20px; padding:12px 25px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; cursor:pointer; font-size:16px; }  
-.header { width:100%; display:flex; justify-content:space-between; padding:20px 50px; background:rgba(0,0,0,0.3); position:fixed; top:0; font-family:'Pacifico', cursive; box-sizing: border-box; }  
-.header h2{color:#00ffff; margin:0;}  
-.center { position:absolute; top:55%; left:50%; transform:translate(-50%,-50%); width:80%; text-align:center; }  
-#task { font-size:32px; line-height:2; color:#aaa; }  
-.correct {color:#00ff88;}  
-.wrong {color:#ff4d4d;}  
-#hiddenInput { opacity:0; position:absolute; }  
-#timer { font-size:28px; color:#00ffcc; text-shadow:0 0 10px #00ffff; margin-bottom:15px; }  
-.btn { margin:10px; padding:12px 30px; border:none; border-radius:10px; background:linear-gradient(45deg,#00c6ff,#0072ff); color:white; font-size:16px; cursor:pointer; }  
-#finishOverlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(10, 10, 30, 0.95);
-    display: none; justify-content: center; align-items: center;
-    flex-direction: column; z-index: 200000; text-align: center;
-}
-#finishOverlay h1 { font-family: 'Pacifico', cursive; color: #00ffff; font-size: 60px; margin: 0; }
-#finalScore { font-size: 28px; color: #00ff88; margin: 20px 0; }
-
-/* फिल्टर बटन्स डिझाईन */
-.filter-btn-container { display: flex; gap: 10px; margin-bottom: 15px; }
-.filter-btn { background: #222; color: white; border: 1px solid var(--primary); padding: 5px 15px; border-radius: 5px; cursor: pointer; font-family: inherit; }
-.filter-btn.active { background: var(--primary); color: black; font-weight: bold; }
-</style>  </head>  <body onclick="focusInput(); unlockAudio();">  
-
-<div id="finishOverlay">
-    <h1>Congratulations! 🚀</h1>
-    <div id="finalScore"></div>
-    <div style="display:flex; gap:10px;">
-        <button class="btn" onclick="nextLevel()">Next Level</button>
-        <button class="btn" style="background:gray;" onclick="restartTest()">Restart</button>
-    </div>
-</div>
-
-<div class="left-menu">  
-<button onclick="showTest()">Test</button>  
-<button onclick="openLogin()">Login</button>  
-<button onclick="openCreate()">Create Account</button>  
-<button onclick="openAdmin()" style="background:#ff4d4d;">ADMIN PANEL</button>
-<button onclick="openSettings()" style="background:#ffa500;">SETTINGS ⚙️</button>
-<button onclick="openLearn()" style="background:#28a745;">LEARN 🎓</button>
-</div>  
-
-<div class="modal" id="learnBox" onclick="event.stopPropagation()">
-    <h2 style="color: #28a745">Learn Typing</h2>
-    <div class="step-item">
-        <h3>Step 1: Proper Positioning</h3>
-        <iframe class="video-frame" src="https://www.youtube.com/embed/1ArVtCQqQRE" frameborder="0" allowfullscreen></iframe>
-    </div>
-    <div class="step-item">
-        <h3>Step 2: Pro Techniques</h3>
-        <iframe class="video-frame" src="https://www.youtube.com/embed/EMUH9BPmqcY" frameborder="0" allowfullscreen></iframe>
-    </div>
-    <button class="btn" onclick="closeAll()">Close</button>
-</div>
-
-<div class="modal" id="settingsBox" onclick="event.stopPropagation()">
-    <h2 style="color: var(--primary)">Settings</h2>
-    <label>Theme:</label>
-    <select id="themeSelect" onchange="changeTheme()">
-        <option value="default">Midnight Dark</option>
-        <option value="light-theme">Arctic White</option>
-        <option value="neon-theme">Neon Glow</option>
-        <option value="matrix-theme">The Matrix</option>
-    </select>
-    <label>Audio:</label>
-    <select id="audioSelect">
-        <option value="classic">Classic Square</option>
-        <option value="mechanical">Mechanical Keyboard</option>
-        <option value="silent">No Sound</option>
-    </select>
-    <br><br>
-    <button class="btn" onclick="closeAll()">Save & Close</button>
-</div>
-
-<div class="modal" id="loginBox" onclick="event.stopPropagation()">  
-<h3>Login</h3>  
-<input type="text" id="username" placeholder="Username">  
-<input type="password" id="password" placeholder="Password">  
-<button class="btn" onclick="login()">Login</button>  
-<button class="btn" style="background:gray" onclick="closeAll()">Close</button>
-</div>  
-
-<div class="modal" id="createBox" onclick="event.stopPropagation()">  
-<h3>Create Account</h3>  
-<input type="text" id="newUsername" placeholder="Username">  
-<input type="password" id="newPassword" placeholder="Password">  
-<button class="btn" onclick="createAccount()">Create</button>  
-<button class="btn" style="background:gray" onclick="closeAll()">Close</button>
-</div>  
-
-<div class="modal" id="adminPanel" onclick="event.stopPropagation()">
-    <h2 style="color:#00ffff">Admin Leaderboard</h2>
-    <div class="filter-btn-container">
-        <button class="filter-btn active" id="btnAll" onclick="filterAdminData('all')">All Time</button>
-        <button class="filter-btn" id="btn1" onclick="filterAdminData(1)">1 Day</button>
-        <button class="filter-btn" id="btn30" onclick="filterAdminData(30)">1 Month</button>
-        <button class="filter-btn" id="btn365" onclick="filterAdminData(365)">1 Year</button>
-    </div>
-    <div id="statsTable"></div>
-    <br>
-    <button class="btn" onclick="closeAll()">Close Dashboard</button>
-</div>
-
-<div id="welcomeScreen">  
-    <div id="welcomeText">Welcome 🚀</div>  
-    <button class="start-btn" onclick="startSite()">Start</button>  
-</div>  
-
-<div class="header">  
-<h2>Typing Speed Test</h2>  
-<div id="userDisplay"></div>  
-</div>  
-
-<div class="center">  
-<div id="timer"></div>  
-<div id="task"></div>  
-<input id="hiddenInput">  
-<div id="result"></div>  
-<div id="gameButtons" style="display:none;">  
-<button class="btn" onclick="nextLevel()">Next Level</button>  
-<button class="btn" onclick="restartTest()" style="background:gray;">Restart</button>  
-</div>  
-</div>  
-
-<div class="test-box" id="testBox" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(255,255,255,0.1); padding:25px; border-radius:15px; text-align:center;">  
-<h2>Select Time</h2>  
-<button onclick="startTest(60)">1 Min</button>  
-<button onclick="startTest(180)">3 Min</button>  
-<button onclick="startTest(300)">5 Min</button>  
-<button onclick="startTest(600)">10 Min</button>  
-</div>  
-
-<script>  
-let currentUser = null;  
-let currentLevelIndex = 0;
-let isPaused = false;
-let testRunning = false;
-let audioCtx;
-let timer, timeLeft=60;  
-let startTime,totalTyped=0;  
-let currentText = "";
-let globalUserStats = {}; // डेटाबेस सेव्ह करण्यासाठी ग्लोबल व्हेरिएबल
-
-const typingLevels = [
-    "Technology is evolving rapidly in today's world.",
-    "Efficient typing skills are essential for productivity in the modern digital era.",
-    "The quick brown fox jumps over the lazy dog while the sun sets behind the green hills.",
-    "Quantum computing uses quantum-mechanical phenomena such as superposition and entanglement.",
-    "Complex systems require a profound understanding of architecture and design patterns to succeed."
-];
-
-function closeAll(){  
-    loginBox.style.display="none";  
-    createBox.style.display="none";  
-    settingsBox.style.display="none";
-    learnBox.style.display="none";
-    if(document.getElementById("testBox")) document.getElementById("testBox").style.display="none";  
-    adminPanel.style.display="none";
-    finishOverlay.style.display="none";
-}  
-
-function openLearn() { stopTyping(); closeAll(); learnBox.style.display="block"; }
-function openSettings() { stopTyping(); closeAll(); settingsBox.style.display="block"; }
-function changeTheme() { document.body.className = document.getElementById("themeSelect").value; }
-function openLogin(){ stopTyping(); closeAll(); loginBox.style.display="block"; username.focus(); }  
-
-async function login(){  
-    let u = document.getElementById("username").value;  
-    let p = document.getElementById("password").value;  
-    const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({u, p})
-    });
-    if(res.ok){  
-        currentUser = u;  
-        document.getElementById("userDisplay").innerHTML = "<span class='user-circle'>👤 "+u+"</span> <button onclick='logout()' style='background:none; border:1px solid #ff4d4d; color:#ff4d4d; border-radius:5px; margin-left:10px; cursor:pointer;'>Logout</button>";  
-        alert("Login Successful!");  
-        closeAll();  
-    } else{ alert("Wrong Username or Password"); }  
-}  
-
-function openCreate(){ stopTyping(); closeAll(); createBox.style.display="block"; newUsername.focus(); }  
-
-async function createAccount(){  
-    let u = document.getElementById("newUsername").value;  
-    let p = document.getElementById("newPassword").value;  
-    if(u && p){  
-        const res = await fetch('/api/create', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({u, p})
-        });
-        if(res.ok){ alert("Account Created for " + u); closeAll(); } 
-        else { alert("User already exists or error!"); }
-    } else{ alert("Enter Username & Password"); }  
-}  
-
-function logout(){ currentUser = null; document.getElementById("userDisplay").innerHTML = ""; }  
-
-async function openAdmin(){
-    stopTyping();
-    closeAll();
-    document.getElementById("adminPanel").style.display = "block";
-    const res = await fetch('/api/admin_data');
-    globalUserStats = await res.json();
-    filterAdminData('all');
-}
-
-// फ्रंटएंडवर दिवसानुसार फिल्टर मोजणारे फंक्शन
-function filterAdminData(days) {
-    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-    if(days === 'all') document.getElementById('btnAll').classList.add('active');
-    else if(days === 1) document.getElementById('btn1').classList.add('active');
-    else if(days === 30) document.getElementById('btn30').classList.add('active');
-    else if(days === 365) document.getElementById('btn365').classList.add('active');
-
-    let processedStats = {};
-    let now = new Date();
-
-    Object.keys(globalUserStats).forEach(name => {
-        let user = globalUserStats[name];
-        
-        if (!user.history || days === 'all') {
-            processedStats[name] = {
-                attempts: user.attempts,
-                bestWpm: user.bestWpm,
-                accuracy: user.accuracy
-            };
-            return;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beginner Typing Speed Test</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --panel-bg: #162447;
+            --accent: #e43f5a;
+            --text: #ffffff;
+            --text-muted: #bdc3c7;
+        }
+        .theme-arctic {
+            --bg: #f5f6fa;
+            --panel-bg: #dcdde1;
+            --accent: #2f3640;
+            --text: #2f3640;
+            --text-muted: #718093;
+        }
+        .theme-neon {
+            --bg: #0d0d0d;
+            --panel-bg: #1a1a1a;
+            --accent: #00ffcc;
+            --text: #00ffcc;
+            --text-muted: #009977;
+        }
+        .theme-matrix {
+            --bg: #000000;
+            --panel-bg: #051105;
+            --accent: #00ff00;
+            --text: #00ff00;
+            --text-muted: #005500;
         }
 
-        let filteredAttempts = 0;
-        let filteredBestWpm = 0;
-        let filteredAcc = 0;
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
 
-        user.history.forEach(entry => {
-            let entryDate = new Date(entry.date_time.replace(' ', 'T'));
-            let timeDiff = now - entryDate;
-            let daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+        .left-menu {
+            width: 220px;
+            background-color: var(--panel-bg);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 10px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+        }
 
-            if (daysDiff <= days) {
-                filteredAttempts++;
-                if (entry.wpm > filteredBestWpm) filteredBestWpm = entry.wpm;
-                filteredAcc = entry.accuracy;
+        .left-menu button {
+            background: transparent;
+            border: 2px solid transparent;
+            color: var(--text);
+            padding: 12px 15px;
+            margin: 8px 0;
+            text-align: left;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .left-menu button:hover, .left-menu button.active {
+            border-color: var(--accent);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            position: relative;
+        }
+
+        #welcomeScreen {
+            text-align: center;
+        }
+
+        .start-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        #testArea {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 30px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .text-display {
+            background-color: var(--panel-bg);
+            padding: 25px;
+            border-radius: 12px;
+            font-size: 24px;
+            line-height: 1.6;
+            letter-spacing: 1px;
+            text-align: left;
+            margin-bottom: 20px;
+            min-height: 100px;
+            word-wrap: break-word;
+        }
+
+        .text-display span {
+            position: relative;
+            color: var(--text-muted);
+        }
+
+        .text-display span.correct { color: #00ff88; }
+        .text-display span.wrong { color: #ff4d4d; background-color: rgba(255,77,77,0.1); }
+        .text-display span.current { border-left: 2px solid var(--accent); animation: blink 0.8s infinite; }
+
+        @keyframes blink { 50% { border-color: transparent; } }
+
+        #hiddenInput { position: absolute; opacity: 0; z-index: -1; }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--panel-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 100;
+            width: 90%;
+            max-width: 450px;
+        }
+
+        .modal-header { font-size: 22px; margin-bottom: 20px; font-weight: bold; }
+        .modal input {
+            width: 93%; padding: 12px; margin-bottom: 15px;
+            background: rgba(0,0,0,0.2); border: 1px solid var(--text-muted);
+            color: var(--text); border-radius: 6px;
+        }
+        .modal button {
+            background-color: var(--accent); color: white; border: none;
+            padding: 12px 25px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px;
+        }
+        .close-modal {
+            position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 20px;
+        }
+
+        /* Overlay Congratulations Page */
+        #finishOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg);
+            z-index: 200;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .filter-buttons button {
+            background: rgba(255,255,255,0.1);
+            color: var(--text);
+            border: 1px solid var(--text-muted);
+            padding: 5px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .filter-buttons button.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        #leaderboardBody tr:nth-child(1) { background: rgba(241, 196, 15, 0.2); font-weight: bold; }
+        #leaderboardBody tr:nth-child(2) { background: rgba(149, 165, 166, 0.2); }
+        #leaderboardBody tr:nth-child(3) { background: rgba(211, 84, 0, 0.2); }
+    </style>
+</head>
+<body>
+
+    <input type="text" id="hiddenInput" autocomplete="off">
+
+    <div class="left-menu">
+        <h2 style="text-align: center; margin-bottom: 30px;">TypeMaster</h2>
+        <button id="menuTest" class="active" onclick="showSection('test')">Typing Test</button>
+        <button id="menuLogin" onclick="openAuthModal()">Login / Register</button>
+        <button id="menuAdmin" onclick="openAdmin()">Admin Panel</button>
+        <button id="menuLearn" onclick="openModal('learnBox')">Learn Typing</button>
+        <button id="menuSettings" onclick="openModal('settingsBox')">Settings</button>
+        <div id="userDisplay" style="margin-top: auto; text-align: center; font-weight: bold; color: var(--accent);"></div>
+    </div>
+
+    <div class="main-container">
+        <!-- Welcome Screen -->
+        <div id="welcomeScreen">
+            <h1 style="font-size: 45px; margin-bottom: 10px;">Test Your Typing Speed</h1>
+            <p style="color: var(--text-muted); margin-bottom: 30px;">Accurate real-time analytics to improve your speed.</p>
+            <button class="start-btn" onclick="startTestFlow()">Start Practice 🚀</button>
+        </div>
+
+        <!-- Testing Area -->
+        <div id="testArea">
+            <div class="stats-bar">
+                <div>Level: <span id="statLevel">1</span>/5</div>
+                <div>Time: <span id="statTime">60</span>s</div>
+                <div>WPM: <span id="statWpm">0</span></div>
+                <div>Accuracy: <span id="statAcc">100</span>%</div>
+            </div>
+            <div class="text-display" id="textDisplay" onclick="focusHiddenInput()"></div>
+            <p style="color: var(--text-muted);" id="pauseNotice">Press [Space] to resume if paused. Press [Enter] to instantly finish.</p>
+        </div>
+    </div>
+
+    <!-- Auth Modal (Login / Register) -->
+    <div class="modal" id="authModal">
+        <span class="close-modal" onclick="closeModal('authModal')">&times;</span>
+        <div id="loginView">
+            <div class="modal-header">Login</div>
+            <input type="text" id="loginUser" placeholder="Username">
+            <input type="password" id="loginPass" placeholder="Password">
+            <button onclick="login()">Login</button>
+            <p style="text-align:center; margin-top:15px; cursor:pointer; font-size:14px;" onclick="toggleAuthView(false)">Don't have an account? Register</p>
+        </div>
+        <div id="registerView" style="display: none;">
+            <div class="modal-header">Create Account</div>
+            <input type="text" id="regUser" placeholder="Username (Min 8 Letters)">
+            <input type="password" id="regPass" placeholder="Strong Password">
+            <button onclick="createAccount()">Register</button>
+            <p style="text-align:center; margin-top:15px; cursor:pointer; font-size:14px;" onclick="toggleAuthView(true)">Already have an account? Login</p>
+        </div>
+    </div>
+
+    <!-- Admin Modal -->
+    <div class="modal" id="adminPanel" style="max-width: 600px;">
+        <span class="close-modal" onclick="closeModal('adminPanel')">&times;</span>
+        <div class="modal-header">Leaderboard & Stats</div>
+        
+        <div class="filter-buttons">
+            <button id="filter-all" class="active" onclick="filterAdminData('all')">All Time</button>
+            <button id="filter-1" onclick="filterAdminData(1)">1 Day</button>
+            <button id="filter-30" onclick="filterAdminData(30)">1 Month</button>
+            <button id="filter-365" onclick="filterAdminData(365)">1 Year</button>
+        </div>
+
+        <div style="max-height: 300px; overflow-y: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--accent);">
+                        <th style="padding: 8px;">Rank</th>
+                        <th style="padding: 8px;">User</th>
+                        <th style="padding: 8px;">Attempts</th>
+                        <th style="padding: 8px;">Best WPM</th>
+                        <th style="padding: 8px;">Last Accuracy</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsBox">
+        <span class="close-modal" onclick="closeModal('settingsBox')">&times;</span>
+        <div class="modal-header">Preferences</div>
+        <label>Visual Theme:</label>
+        <select id="themeSelect" onchange="changeTheme()" style="width:100%; padding:10px; margin: 10px 0 20px; background:#000; color:#fff; border:1px solid var(--text-muted); border-radius:6px;">
+            <option value="dark">Midnight Dark</option>
+            <option value="arctic">Arctic White</option>
+            <option value="neon">Neon Glow</option>
+            <option value="matrix">The Matrix</option>
+        </select>
+        <label>Keyboard Sound:</label>
+        <select id="soundSelect" style="width:100%; padding:10px; margin: 10px 0; background:#000; color:#fff; border:1px solid var(--text-muted); border-radius:6px;">
+            <option value="mechanical">Mechanical Click</option>
+            <option value="classic">Classic Beep</option>
+            <option value="none">Mute</option>
+        </select>
+    </div>
+
+    <!-- Learn Typing Modal -->
+    <div class="modal" id="learnBox" style="max-width: 500px;">
+        <span class="close-modal" onclick="closeModal('learnBox')">&times;</span>
+        <div class="modal-header">Learn Proper Finger Positioning</div>
+        <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:8px;">
+            <iframe style="position:absolute; top:0; left:0; width:100%; height:100%;" src="https://www.youtube.com/embed/Sk8IQooXvYk" frameborder="0" allowfullscreen></iframe>
+        </div>
+        <p style="font-size: 14px; margin-top: 15px; color: var(--text-muted);">Keep your wrists straight, place fingers on the Home Row (ASDF JKL;), and practice without looking down.</p>
+    </div>
+
+    <!-- Full Screen Finish Overlay -->
+    <div id="finishOverlay">
+        <h1 style="font-size: 50px; color: #00ff88; margin-bottom: 10px;">Congratulations! 🚀</h1>
+        <p style="font-size: 20px; margin-bottom: 30px;">Practice makes perfect. Here is your evaluation:</p>
+        <div style="display:flex; gap: 40px; margin-bottom: 40px;">
+            <div>
+                <div style="font-size: 14px; color: var(--text-muted);">SPEED</div>
+                <div style="font-size: 45px; font-weight:bold;" id="overWpm">0 WPM</div>
+            </div>
+            <div>
+                <div style="font-size: 14px; color: var(--text-muted);">ACCURACY</div>
+                <div style="font-size: 45px; font-weight:bold;" id="overAcc">100%</div>
+            </div>
+        </div>
+        <button class="start-btn" onclick="nextLevelOrRestart()">Continue Progress</button>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let currentLevelIndex = 0;
+        let timer = null;
+        let timeLeft = 60;
+        let testRunning = false;
+        let isPaused = false;
+        let globalUserStats = {};
+
+        const typingLevels = [
+            "The quick brown fox jumps over the lazy dog perfectly.",
+            "Success is not final failure is not fatal it is the courage to continue that counts.",
+            "Develop a passion for learning If you do you will never cease to grow in your life.",
+            "Technology is best when it brings people together and solves real world problems safely.",
+            "Artificial intelligence and computer networking systems are shaping the landscape of modern tech architectures."
+        ];
+
+        let currentText = typingLevels[0];
+        const hiddenInput = document.getElementById('hiddenInput');
+        const textDisplay = document.getElementById('textDisplay');
+
+        // Audio System
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playKeySound() {
+            const soundType = document.getElementById('soundSelect').value;
+            if (soundType === 'none') return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (soundType === 'mechanical') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.05);
+            } else {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.03);
+            }
+        }
+
+        // Setup text view
+        function setupTextDisplay() {
+            textDisplay.innerHTML = '';
+            for (let char of currentText) {
+                const span = document.createElement('span');
+                span.innerText = char;
+                textDisplay.appendChild(span);
+            }
+            if(textDisplay.children.length > 0) textDisplay.children[0].classList.add('current');
+        }
+
+        function startTestFlow() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('testArea').style.display = 'block';
+            resetTest();
+            focusHiddenInput();
+        }
+
+        function focusHiddenInput() {
+            if (!isPaused) hiddenInput.focus();
+        }
+
+        function resetTest() {
+            clearInterval(timer);
+            timeLeft = 60;
+            testRunning = false;
+            isPaused = false;
+            hiddenInput.value = '';
+            document.getElementById('statTime').innerText = timeLeft;
+            document.getElementById('statWpm').innerText = '0';
+            document.getElementById('statAcc').innerText = '100';
+            document.getElementById('pauseNotice').style.visibility = 'hidden';
+            setupTextDisplay();
+        }
+
+        function startTimer() {
+            testRunning = true;
+            timer = setInterval(() => {
+                if (!isPaused) {
+                    timeLeft--;
+                    document.getElementById('statTime').innerText = timeLeft;
+                    calculateRealtimeStats();
+                    if (timeLeft <= 0) finishTest();
+                }
+            }, 1000);
+        }
+
+        function pauseTyping() {
+            isPaused = true;
+            document.getElementById('pauseNotice').innerText = "Test Paused. Press [Space] to resume.";
+            document.getElementById('pauseNotice').style.visibility = 'visible';
+        }
+
+        function resumeTyping() {
+            isPaused = false;
+            document.getElementById('pauseNotice').style.visibility = 'hidden';
+            hiddenInput.focus();
+        }
+
+        hiddenInput.addEventListener('input', () => {
+            if (!testRunning && !isPaused) startTimer();
+            if (isPaused) {
+                hiddenInput.value = hiddenInput.value.slice(0, -1);
+                return;
+            }
+
+            playKeySound();
+            const inputVal = hiddenInput.value;
+            const spans = textDisplay.children;
+            let correctCount = 0;
+
+            for (let i = 0; i < spans.length; i++) {
+                spans[i].className = '';
+                if (i < inputVal.length) {
+                    if (inputVal[i] === currentText[i]) {
+                        spans[i].classList.add('correct');
+                        correctCount++;
+                    } else {
+                        spans[i].classList.add('wrong');
+                    }
+                }
+            }
+
+            if (inputVal.length < spans.length) {
+                spans[inputVal.length].classList.add('current');
+            }
+
+            // Detect if idle/pause threshold hit (e.g. trailing space or logic checking)
+            if (inputVal.endsWith('   ')) { 
+                pauseTyping();
+            }
+
+            if (inputVal.length >= currentText.length) {
+                finishTest();
             }
         });
 
-        processedStats[name] = {
-            attempts: filteredAttempts,
-            bestWpm: filteredBestWpm,
-            accuracy: filteredAcc
-        };
-    });
-
-    let sortedUsers = Object.keys(processedStats).sort((a,b) => processedStats[b].bestWpm - processedStats[a].bestWpm);
-    let html = "<table><tr><th>Rank</th><th>User</th><th>Tests</th><th>Max WPM</th><th>Accuracy</th></tr>";
-    sortedUsers.forEach((name, index) => {
-        let s = processedStats[name];
-        html += `<tr><td>#${index + 1}</td><td>${name}</td><td>${s.attempts}</td><td>${s.bestWpm}</td><td>${s.accuracy}%</td></tr>`;
-    });
-    html += "</table>";
-    document.getElementById("statsTable").innerHTML = html;
-}
-
-function stopTyping(){ 
-    clearInterval(timer); 
-    isPaused = true;
-    document.getElementById("hiddenInput").blur(); 
-}  
-
-function resumeTyping(){
-    if(isPaused && timeLeft > 0 && testRunning){
-        isPaused = false;
-        clearInterval(timer);
-        timer = setInterval(updateTimer, 1000);
-        document.getElementById("hiddenInput").focus();
-    }
-}
-
-window.addEventListener("keydown", function(e) {
-    if(e.code === "Space" && isPaused && finishOverlay.style.display !== "flex" && testRunning) {
-        resumeTyping();
-        e.preventDefault();
-    }
-    if(e.code === "Enter" && testRunning) {
-        finishTest();
-    }
-});
-
-function unlockAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }  
-function playKeySound(){  
-    let type = document.getElementById("audioSelect").value;
-    if(type === "silent" || !audioCtx) return;  
-    let osc = audioCtx.createOscillator();  
-    let gain = audioCtx.createGain();  
-    if(type === "mechanical") {
-        osc.type = "sawtooth";
-        osc.frequency.value = 150 + Math.random()*50;
-        gain.gain.value = 0.02;
-    } else {
-        osc.type = "square";
-        osc.frequency.value = 200 + Math.random()*100;
-        gain.gain.value = 0.05;
-    }
-    osc.connect(gain); gain.connect(audioCtx.destination);  
-    osc.start(); osc.stop(audioCtx.currentTime + 0.05);  
-}  
-
-function loadText(){  
-    closeAll();
-    result.innerHTML=""; 
-    document.getElementById("gameButtons").style.display="none";  
-    currentText = typingLevels[currentLevelIndex % typingLevels.length]; 
-    let html="";  
-    for(let i=0;i<currentText.length;i++){ html+="<span>"+currentText[i]+"</span>"; }  
-    task.innerHTML=html; hiddenInput.value=""; 
-    startTime = new Date().getTime();  
-    isPaused = false;
-    testRunning = true;
-    clearInterval(timer); 
-    timer = setInterval(updateTimer, 1000);  
-}  
-
-function updateTimer(){  
-    if(!isPaused){
-        timeLeft--; 
-        document.getElementById("timer").innerText="⏱ "+timeLeft+" sec";  
-        if(timeLeft<=0) finishTest();  
-    }
-}  
-
-function focusInput(){ if(!isPaused && testRunning) document.getElementById("hiddenInput").focus(); }  
-
-hiddenInput.addEventListener("input",function(){  
-    if(isPaused || !testRunning) return;
-    playKeySound();  
-    let input=this.value;  
-    let spans=document.querySelectorAll("#task span");  
-    totalTyped=input.length;  
-    for(let i=0;i<spans.length;i++){  
-        if(input[i]==null) spans[i].classList.remove("correct","wrong");  
-        else if(input[i]===currentText[i]){ spans[i].classList.add("correct"); spans[i].classList.remove("wrong"); }  
-        else { spans[i].classList.add("wrong"); spans[i].classList.remove("correct"); }  
-    }  
-    if(input===currentText) finishTest();  
-});  
-
-async function finishTest(){  
-    clearInterval(timer);  
-    isPaused = true;
-    testRunning = false;
-    let timeUsed = (new Date().getTime() - startTime) / 60000;  
-    let wpm = Math.round((totalTyped/5)/timeUsed) || 0;  
-    let correctChars = document.querySelectorAll(".correct").length;
-    let acc = totalTyped > 0 ? Math.round((correctChars / totalTyped) * 100) : 0;
-
-    document.getElementById("finalScore").innerText = "Speed: " + wpm + " WPM | Accuracy: " + acc + "%";
-    document.getElementById("finishOverlay").style.display = "flex";
-
-    if(currentUser) {
-        await fetch('/api/update_stats', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({u: currentUser, wpm: wpm, acc: acc})
+        // Key interception for Pausing (Space) and Instant Finishing (Enter)
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && isPaused) {
+                e.preventDefault();
+                resumeTyping();
+            }
+            if (e.code === 'Enter' && testRunning) {
+                e.preventDefault();
+                finishTest();
+            }
         });
-    }
-}  
 
-function nextLevel() { currentLevelIndex++; timeLeft = 60; loadText(); }
-function restartTest() { timeLeft = 60; loadText(); }
-function showTest(){ stopTyping(); closeAll(); document.getElementById("testBox").style.display="block"; }  
-function startTest(t){ timeLeft=t; document.getElementById("testBox").style.display="none"; loadText(); }  
-function startSite(){ welcomeScreen.style.display="none"; loadText(); }  
-</script>  
-</body>  
-</html>  
+        function calculateRealtimeStats() {
+            const inputVal = hiddenInput.value;
+            if (inputVal.length === 0) return;
+            const timeUsed = (60 - timeLeft) / 60;
+            if (timeUsed <= 0) return;
+
+            let correct = 0;
+            for(let i=0; i<inputVal.length; i++) {
+                if(inputVal[i] === currentText[i]) correct++;
+            }
+
+            const wpm = Math.round((inputVal.length / 5) / timeUsed);
+            const acc = Math.round((correct / inputVal.length) * 100);
+
+            document.getElementById('statWpm').innerText = wpm;
+            document.getElementById('statAcc').innerText = acc;
+        }
+
+        async function finishTest() {
+            clearInterval(timer);
+            testRunning = false;
+            const inputVal = hiddenInput.value;
+            const timeUsed = Math.max(1, 60 - timeLeft);
+            
+            let correct = 0;
+            for(let i=0; i<inputVal.length; i++) {
+                if(inputVal[i] === currentText[i]) correct++;
+            }
+
+            const finalWpm = Math.round((inputVal.length / 5) / (timeUsed / 60)) || 0;
+            const finalAcc = inputVal.length > 0 ? Math.round((correct / inputVal.length) * 100) : 0;
+
+            document.getElementById('overWpm').innerText = finalWpm + " WPM";
+            document.getElementById('overAcc').innerText = finalAcc + "%";
+            document.getElementById('finishOverlay').style.display = 'flex';
+
+            if (currentUser) {
+                await fetch('/api/update_stats', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ u: currentUser, wpm: finalWpm, acc: finalAcc })
+                });
+            }
+        }
+
+        function nextLevelOrRestart() {
+            document.getElementById('finishOverlay').style.display = 'none';
+            currentLevelIndex = (currentLevelIndex + 1) % typingLevels.length;
+            currentText = typingLevels[currentLevelIndex];
+            document.getElementById('statLevel').innerText = currentLevelIndex + 1;
+            resetTest();
+            focusHiddenInput();
+        }
+
+        // Modals Management
+        function openModal(id) { document.getElementById(id).style.display = 'block'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function openAuthModal() { openModal('authModal'); toggleAuthView(true); }
+        function toggleAuthView(showLogin) {
+            document.getElementById('loginView').style.display = showLogin ? 'block' : 'none';
+            document.getElementById('registerView').style.display = showLogin ? 'none' : 'block';
+        }
+
+        async function login() {
+            const u = document.getElementById('loginUser').value.trim();
+            const p = document.getElementById('loginPass').value.trim();
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ u, p })
+            });
+            if (res.ok) {
+                currentUser = u;
+                document.getElementById('userDisplay').innerText = `Active: ${u}`;
+                closeModal('authModal');
+                alert('Successfully logged in!');
+            } else {
+                alert('Invalid Credentials');
+            }
+        }
+
+        async function createAccount() {
+            const u = document.getElementById('regUser').value.trim();
+            const p = document.getElementById('regPass').value.trim();
+
+            // 1. Username Length Validation (Minimum 8 characters)
+            if (u.length < 8) {
+                alert("Username must be at least 8 characters long!");
+                return;
+            }
+
+            // 2. Strong Password Validation via RegEx
+            // Must contain: 8 Chars minimum, 1 Uppercase letter, 1 Number, 1 Special Char
+            const strongPasswordRegex = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})/;
+
+            if (!strongPasswordRegex.test(p)) {
+                alert("Password is too weak!\n\nIt must contain:\n- At least 8 characters\n- One Uppercase letter (A-Z)\n- One Number (0-9)\n- One Special Character (!@#$%^&*)");
+                return;
+            }
+
+            const res = await fetch('/api/create', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ u, p })
+            });
+            const data = await res.json();
+            if (data.status === 'exists') {
+                alert('Username already taken!');
+            } else {
+                alert('Account verified and created successfully! You can login now.');
+                toggleAuthView(true);
+            }
+        }
+
+        async function openAdmin() {
+            const res = await fetch('/api/admin_data');
+            globalUserStats = await res.json();
+            openModal('adminPanel');
+            filterAdminData('all');
+        }
+
+        function filterAdminData(filterType) {
+            // Adjust active filter class
+            document.querySelectorAll('.filter-buttons button').forEach(b => b.classList.remove('active'));
+            if(filterType === 'all') document.getElementById('filter-all').classList.add('active');
+            else if(filterType === 1) document.getElementById('filter-1').classList.add('active');
+            else if(filterType === 30) document.getElementById('filter-30').classList.add('active');
+            else if(filterType === 365) document.getElementById('filter-365').classList.add('active');
+
+            const tbody = document.getElementById('leaderboardBody');
+            tbody.innerHTML = '';
+
+            let processedUsers = [];
+
+            for (let username in globalUserStats) {
+                let userData = globalUserStats[username];
+                let attempts = 0;
+                let bestWpm = 0;
+                let lastAccuracy = 0;
+
+                if (filterType === 'all') {
+                    attempts = userData.attempts;
+                    bestWpm = userData.bestWpm;
+                    lastAccuracy = userData.accuracy;
+                } else {
+                    let filteredHistory = (userData.history || []).filter(entry => {
+                        let entryDate = new Date(entry.date_time.replace(' ', 'T'));
+                        let timeDiff = new Date() - entryDate;
+                        let daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+                        return daysDiff <= filterType;
+                    });
+
+                    attempts = filteredHistory.length;
+                    if (attempts > 0) {
+                        bestWpm = Math.max(...filteredHistory.map(h => h.wpm));
+                        lastAccuracy = filteredHistory[filteredHistory.length - 1].accuracy;
+                    }
+                }
+
+                if (filterType === 'all' || attempts > 0) {
+                    processedUsers.push({
+                        username, attempts, bestWpm, lastAccuracy
+                    });
+                }
+            }
+
+            processedUsers.sort((a, b) => b.bestWpm - a.bestWpm);
+
+            processedUsers.forEach((user, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="padding: 8px;">#${index + 1}</td>
+                    <td style="padding: 8px;">${user.username}</td>
+                    <td style="padding: 8px;">${user.attempts}</td>
+                    <td style="padding: 8px;">${user.bestWpm}</td>
+                    <td style="padding: 8px;">${user.lastAccuracy}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function changeTheme() {
+            const theme = document.getElementById('themeSelect').value;
+            document.body.className = '';
+            if (theme !== 'dark') document.body.classList.add(`theme-${theme}`);
+        }
+
+        setupTextDisplay();
+    </script>
+</body>
+</html>
 """
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
